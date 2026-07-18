@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uraai — Reply to Customers. Automatically.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Meta / Facebook SDK for Embedded Signup -->
+  <script>
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId: '1633938775014722', // your real ID here
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: 'v19.0'
+      });
+    };
+  </script>
+  <script async defer crossorigin="anonymous" 
+    src="https://connect.facebook.net/en_US/sdk.js">
+  </script>
+</head>
+<body>
+
+  <!-- ==================== LANDING PAGE / MARKETING SITE ==================== -->
+  <div id="landing-page-root">
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+    <div class="bg-glow-3"></div>
+
+    <!-- Global Header Navigation -->
+    <header class="header-nav">
+      <a href="#" class="nav-brand">
+        <div class="brand-logo-icon">U</div>
+        <span class="brand-name">Uraai</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="#pricing-section" class="nav-link">Pricing</a></li>
+      </ul>
+      <div class="nav-actions" id="header-nav-actions">
+        <button class="btn-nav-ghost" id="nav-btn-login">Log In</button>
+        <button class="btn-nav-filled" id="nav-btn-signup">Start Free</button>
+      </div>
+    </header>
+
+    <!-- Landing Hero -->
+    <section class="landing-hero" id="home">
+      <div class="hero-badge">
+        <div class="hero-badge-dot"></div>
+        <span>⚡ AI-powered business bot builder</span>
+      </div>
+      <h1 class="hero-title">Reply to every customer.<br><span>Automatically.</span></h1>
+      <p class="hero-subtitle">
+        Deploy custom bots on WhatsApp, Instagram, and Email in minutes. Save every lead, schedule appointments, and answer FAQs in Tamil, Hindi, and English.
+      </p>
+      <div class="hero-ctas">
+        <button class="btn-hero-primary" id="hero-btn-start">Get Started Free</button>
+        <button class="btn-hero-secondary" id="hero-btn-sandbox">Try Live Simulator</button>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+      <div class="features-title-container">
+        <div class="features-eyebrow">Integrations</div>
+        <h2 class="features-h2">Connected Channels & Features</h2>
+      </div>
+      <div class="features-grid">
+        <div class="feat-card">
+          <div class="feat-card-icon" style="color: #25D366;">📱</div>
+          <h3 class="feat-card-title">WhatsApp Automation</h3>
+          <p class="feat-card-desc">Sync WhatsApp Business API or Web sessions. Instantly resolve enquiries and capture numbers as qualified database leads.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-icon" style="color: #E1306C;">📸</div>
+          <h3 class="feat-card-title">Instagram DM Manager</h3>
+          <p class="feat-card-desc">Auto-respond to Instagram stories, story mentions, and direct messages. Forward product catalogs and pricing details.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-card-icon" style="color: var(--violet-2);">🗣️</div>
+          <h3 class="feat-card-title">Indian Regional Translation</h3>
+          <p class="feat-card-desc">Fully operational auto-translation engine supporting Tamil (தமிழ்), Hindi (हिंदी), and English to match consumer chats.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="features-section" id="pricing-section" style="padding-top:20px; padding-bottom:60px;">
+      <div class="features-title-container">
+        <div class="features-eyebrow">Subsidized plans</div>
+        <h2 class="features-h2">Honest, straightforward pricing</h2>
+      </div>
+      
+      <div class="features-grid">
+        <div class="plan" data-tier="starter" style="background: rgba(255,255,255,0.01); border-color: rgba(255,255,255,0.06); color: white; padding: 24px;">
+          <div class="plan-top-row">
+            <div>
+              <div class="plan-tier" style="color: rgba(255,255,255,0.4);">Starter</div>
+              <div class="plan-name-big" style="color:white;">Free</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="plan-price-big" style="color:white;">₹0</div>
+              <div class="plan-period" style="color: rgba(255,255,255,0.4);">forever</div>
+            </div>
+          </div>
+          <div class="plan-divider" style="background: rgba(255,255,255,0.06);"></div>
+          <ul class="feat-list" style="margin-bottom:24px;">
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check">✓</div>1 WhatsApp bot</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check">✓</div>50 AI replies per month</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check">✓</div>5 FAQ templates</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check">✓</div>Tamil + Hindi + English</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check">✓</div>Lead inbox</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check">✓</div>7-day reply history</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check">✓</div>Weekly summary email</li>
+          </ul>
+          <button class="plan-cta cta-outline main-price-cta" data-tier="starter">Select Plan</button>
+        </div>
+
+        <div class="plan featured" data-tier="pro" style="padding: 24px;">
+          <div class="plan-badge">⭐ MOST POPULAR</div>
+          <div class="plan-top-row">
+            <div>
+              <div class="plan-tier" style="color:rgba(255,255,255,0.4)">Growth</div>
+              <div class="plan-name-big">Pro</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="plan-price-big" style="color:var(--violet-2)">₹499</div>
+              <div class="plan-period">/month</div>
+            </div>
+          </div>
+          <div class="plan-divider"></div>
+          <ul class="feat-list" style="margin-bottom:24px;">
+            <li class="feat-item"><div class="feat-check">✓</div>3 WhatsApp bots</li>
+            <li class="feat-item"><div class="feat-check">✓</div>Instagram + Email automation</li>
+            <li class="feat-item"><div class="feat-check">✓</div>5 languages incl. Telugu, Malayalam</li>
+            <li class="feat-item"><div class="feat-check">✓</div>Unlimited AI replies</li>
+            <li class="feat-item"><div class="feat-check">✓</div>Auto follow-up reminders</li>
+            <li class="feat-item"><div class="feat-check">✓</div>Appointment booking calendar</li>
+            <li class="feat-item"><div class="feat-check">✓</div>Lead export to CSV</li>
+            <li class="feat-item"><div class="feat-check">✓</div>3 team members</li>
+            <li class="feat-item"><div class="feat-check">✓</div>WhatsApp broadcast — 50/month</li>
+          </ul>
+          <button class="plan-cta cta-fill main-price-cta" data-tier="pro">Upgrade to Pro</button>
+        </div>
+
+        <div class="plan" data-tier="max" style="background: rgba(255,255,255,0.01); border-color: rgba(255,255,255,0.06); color: white; padding: 24px;">
+          <div class="plan-top-row">
+            <div>
+              <div class="plan-tier" style="color: rgba(255,255,255,0.4);">Power</div>
+              <div class="plan-name-big" style="color:white;">Max</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="plan-price-big" style="color:var(--ember);">₹999</div>
+              <div class="plan-period" style="color: rgba(255,255,255,0.4);">/month</div>
+            </div>
+          </div>
+          <div class="plan-divider" style="background: rgba(255,255,255,0.06);"></div>
+          <ul class="feat-list" style="margin-bottom:24px;">
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>Unlimited bots</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>8+ languages</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>AI lead scoring (Hot/Warm/Cold)</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>Multi-step follow-up sequences</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>Razorpay payment collection</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>CRM integration</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>Auto-generated monthly reports</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>10 team members + roles</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>Unlimited WhatsApp broadcast</li>
+            <li class="feat-item" style="color: rgba(255,255,255,0.6);"><div class="feat-check ember">✓</div>Priority call + WhatsApp support</li>
+          </ul>
+          <button class="plan-cta cta-ember main-price-cta" data-tier="max">Get Max</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==================== REAL STANDALONE RESPONSIVE APP ROOT ==================== -->
+  <div id="app-root" style="display: none;">
+    <!-- Desktop Sidebar -->
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo-icon">U</div>
+        <span class="brand-name">Uraai</span>
+      </div>
+      
+      <nav class="sidebar-menu">
+        <a href="#" class="sidebar-item active" data-tab="dashboard">
+          <span class="sidebar-item-icon">⊞</span>
+          <span class="sidebar-item-label">Dashboard</span>
+        </a>
+        <a href="#" class="sidebar-item" data-tab="bot_builder">
+          <span class="sidebar-item-icon">🤖</span>
+          <span class="sidebar-item-label">Bot Builder</span>
+        </a>
+        <a href="#" class="sidebar-item" data-tab="analytics">
+          <span class="sidebar-item-icon">📊</span>
+          <span class="sidebar-item-label">Analytics</span>
+        </a>
+        <a href="#" class="sidebar-item" data-tab="pricing">
+          <span class="sidebar-item-icon">💳</span>
+          <span class="sidebar-item-label">Billing & Plans</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile-badge">
+          <div class="avatar" id="sidebar-avatar-circle">S</div>
+          <div class="user-profile-info">
+            <h4 id="sidebar-user-name">Sanjay</h4>
+            <p id="sidebar-business-name">Priya Salon</p>
+          </div>
+        </div>
+        <button class="btn-logout" id="app-logout-btn">
+          <span class="logout-icon">↩</span> Log Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+      <a href="#" class="mobile-nav-item active" data-tab="dashboard">
+        <span class="mobile-nav-icon">⊞</span>
+        <span class="mobile-nav-label">Home</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-tab="bot_builder">
+        <span class="mobile-nav-icon">🤖</span>
+        <span class="mobile-nav-label">Bots</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-tab="analytics">
+        <span class="mobile-nav-icon">📊</span>
+        <span class="mobile-nav-label">Analytics</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-tab="pricing">
+        <span class="mobile-nav-icon">💳</span>
+        <span class="mobile-nav-label">Billing</span>
+      </a>
+    </nav>
+
+    <!-- App Main Viewport -->
+    <main class="app-viewport">
+      <!-- Header Bar -->
+      <header class="app-header">
+        <div class="mobile-menu-brand">
+          <div class="brand-logo-icon">U</div>
+          <span class="brand-name">Uraai</span>
+        </div>
+        <div class="app-header-title">
+          <h2 id="app-header-view-title">Dashboard</h2>
+        </div>
+        <div class="app-header-user">
+          <span class="app-header-plan-badge" id="app-header-plan-badge">Starter Plan</span>
+        </div>
+      </header>
+
+      <!-- App Viewport Screen Container -->
+      <div class="app-screens-container">
+        
+        <!-- Onboarding Screen (Splash) -->
+        <div class="screen" id="onboarding">
+          <div class="s1-body">
+            <div class="s1-hero" style="border-radius: var(--r-lg);">
+              <div class="s1-wordmark">
+                <div class="s1-icon"><div class="s1-icon-u">U</div></div>
+                <div class="s1-brand">Uraai</div>
+              </div>
+              <div class="s1-headline">Reply to every customer. Automatically.</div>
+              <div class="s1-sub">WhatsApp, Instagram & Email dashboard setup.</div>
+            </div>
+            <div class="s1-content">
+              <button class="btn-fill" id="s1-btn-start">Create free account</button>
+              <button class="btn-ghost" id="s1-btn-signin" style="margin-bottom:0;">Sign in to existing account</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div class="screen active" id="dashboard">
+          <!-- Greeting Header -->
+          <div class="app-screen-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div class="s2-greeting" id="dash-greeting-text">வணக்கம், Good morning</div>
+              <h3 class="s2-name" id="dash-user-name">Sanjay 👋</h3>
+              <p style="margin-top:4px;">Here is what's happening with your business channels today.</p>
+            </div>
+            <div class="avatar" id="dash-avatar-circle" style="width:48px; height:48px; font-size:18px;">S</div>
+          </div>
+
+          <div class="dashboard-desktop-layout">
+            <div class="dashboard-hero-stat-row">
+              <div class="s2-hero-stat">
+                <div class="s2-hero-left">
+                  <p>Replies today</p>
+                  <h2 id="stat-replies">1,284</h2>
+                  <span>across active channels</span>
+                </div>
+                <div class="s2-hero-badge">
+                  <p>Leads saved</p>
+                  <h4 id="stat-leads">47</h4>
+                  <span>↑ 8% today</span>
+                </div>
+              </div>
+
+              <div class="s2-grid" style="margin-bottom:0;">
+                <div class="mini-card">
+                  <div class="mini-card-label">Avg Response</div>
+                  <div class="mini-card-val" id="stat-avg-time">2.1s</div>
+                  <div class="mini-card-sub up">↑ Excellent speed</div>
+                </div>
+                <div class="mini-card">
+                  <div class="mini-card-label">Satisfaction</div>
+                  <div class="mini-card-val" id="stat-satisfaction">98%</div>
+                  <div class="mini-card-sub up">↑ 3% this week</div>
+                </div>
+                <div class="mini-card">
+                  <div class="mini-card-label">Missed chats</div>
+                  <div class="mini-card-val" id="stat-missed">0</div>
+                  <div class="mini-card-sub up">Perfect record</div>
+                </div>
+                <div class="mini-card">
+                  <div class="mini-card-label">Bots active</div>
+                  <div class="mini-card-val" id="stat-bots-active">2</div>
+                  <div class="mini-card-sub" style="color:var(--ink-30);">of 3 running</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-split-panels">
+              <div class="app-card-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                  <h3 style="margin-bottom:0;">Active Channels</h3>
+                  <a href="#" style="color:var(--violet); font-size:12px; font-weight:600; text-decoration:none;" onclick="navigateTo('pricing'); return false;">Manage Plans</a>
+                </div>
+                <div id="dashboard-channels-list">
+
+                  <!-- WhatsApp Channel Card -->
+                  <div class="channel-connect-card" id="wa-channel-card">
+                    <div class="channel-connect-left">
+                      <div class="channel-icon-wrap" style="background:#E8FFF0;">📱</div>
+                      <div class="channel-connect-info">
+                        <h4>WhatsApp</h4>
+                        <p id="wa-channel-status-text">Not connected</p>
+                      </div>
+                    </div>
+                    <div class="channel-connect-right">
+                      <!-- Shows when NOT connected -->
+                      <button class="btn-connect-channel" id="wa-connect-btn" onclick="startWhatsAppEmbeddedSignup()">
+                        Connect →
+                      </button>
+                      <!-- Shows when connected (hidden by default) -->
+                      <div class="channel-connected-badge" id="wa-connected-badge" style="display:none;">
+                        <span class="live-dot"></span> Live
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Instagram Channel Card -->
+                  <div class="channel-connect-card" id="ig-channel-card">
+                    <div class="channel-connect-left">
+                      <div class="channel-icon-wrap" style="background:#FFF0F7;">📸</div>
+                      <div class="channel-connect-info">
+                        <h4>Instagram DM</h4>
+                        <p>Coming soon</p>
+                      </div>
+                    </div>
+                    <div class="channel-connect-right">
+                      <button class="btn-connect-channel" style="opacity:0.4;cursor:not-allowed;">
+                        Soon
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Email Channel Card -->
+                  <div class="channel-connect-card" id="em-channel-card">
+                    <div class="channel-connect-left">
+                      <div class="channel-icon-wrap" style="background:#EFF6FF;">📧</div>
+                      <div class="channel-connect-info">
+                        <h4>Email</h4>
+                        <p>Coming soon</p>
+                      </div>
+                    </div>
+                    <div class="channel-connect-right">
+                      <button class="btn-connect-channel" style="opacity:0.4;cursor:not-allowed;">
+                        Soon
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="app-card-panel">
+                <h3>Recent Leads Saved</h3>
+                <div class="lead-card" style="border:none; padding:0;">
+                  <div id="recent-leads-container">
+                    <p style="font-size:13px;color:var(--ink-40);text-align:center;padding:20px 0;">
+                      No leads yet — leads appear here when customers message your bot
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bot Builder Screen -->
+        <div class="screen" id="bot_builder">
+          <div class="app-screen-header">
+            <h3>Bot Configuration</h3>
+            <p id="builder-business-name-sub">Salon — Active</p>
+          </div>
+
+          <div class="builder-layout-wrapper">
+            <div class="builder-left-settings">
+              <div class="form-block">
+                <label>Welcome message</label>
+                <input class="field focused" id="welcome-msg-input" value="வணக்கம்! Welcome to Priya Beauty Salon 💇‍♀️">
+              </div>
+
+              <div class="form-block">
+                <label>Reply language</label>
+                <div class="tag-row" id="lang-tag-row">
+                  <div class="tag" data-lang="tamil">தமிழ்</div>
+                  <div class="tag" data-lang="english">English</div>
+                  <div class="tag" data-lang="hindi">हिंदी</div>
+                  <div class="tag" data-lang="telugu">తెలుగు</div>
+                  <div class="tag" data-lang="malayalam">മലയാളം</div>
+                </div>
+              </div>
+
+              <div class="form-block">
+                <div class="field-row">
+                  <div>
+                    <label>Open time</label>
+                    <input class="field" id="open-time-input" value="9:00 AM">
+                  </div>
+                  <div>
+                    <label>Close time</label>
+                    <input class="field" id="close-time-input" value="8:00 PM">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-block">
+                <label>FAQ replies</label>
+                <div id="faq-replies-list">
+                  <!-- FAQ list -->
+                </div>
+                <button class="add-faq" id="add-faq-btn">+ Add FAQ reply</button>
+              </div>
+
+              <div class="save-bar" style="border:none; padding:0; background:transparent;">
+                <button class="save-bar-btn" id="save-changes-btn">
+                  <span>Save changes</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Mobile floating tester FAB -->
+            <button class="mobile-chat-tester-trigger" id="mobile-chat-tester-trigger">
+              <span>💬 Test Bot</span>
+            </button>
+
+            <!-- Tester Panel (WhatsApp + Console) -->
+            <div class="builder-right-tester">
+              <div class="tester-close-row-mobile" id="mobile-tester-close-btn">
+                <span>← Back to Settings</span>
+              </div>
+              
+              <div class="tester-card-header">
+                <div class="tester-title">⚡ Live WhatsApp Simulator</div>
+                <div class="tester-desc">Test greetings, FAQs, and translations instantly.</div>
+              </div>
+
+              <div class="phone" id="customer-phone" style="border:none; box-shadow:none; width:100%;">
+                <div class="wa-body">
+                  <div class="wa-header">
+                    <div class="wa-avatar" id="wa-avatar-char">P<div class="wa-avatar-status"></div></div>
+                    <div class="wa-title-container">
+                      <div class="wa-business-name" id="wa-header-business-name">
+                        Priya Beauty Salon 💇‍♀️ <span class="wa-business-verified">✓</span>
+                      </div>
+                      <div class="wa-status-text">Uraai Auto-Reply Bot</div>
+                    </div>
+                  </div>
+
+                  <div class="wa-chat-area" id="wa-chat-area">
+                    <div class="wa-msg-system">
+                      🔒 Messages and calls are end-to-end encrypted. No one outside of this chat can read them.
+                    </div>
+                    <div class="wa-msg wa-msg-received" id="wa-first-received-bubble">
+                      <div class="wa-msg-badge">⚡ Uraai Bot</div>
+                      வணக்கம்! Welcome to Priya Beauty Salon 💇‍♀️<br>How can I help you today?
+                      <div class="wa-msg-meta"><span>09:41 AM</span></div>
+                    </div>
+                  </div>
+
+                  <div class="wa-input-panel">
+                    <div class="wa-chips-row" id="wa-chips-row">
+                      <!-- Chips list -->
+                    </div>
+                    <div class="wa-input-row">
+                      <input type="text" class="wa-input" id="wa-input-field" placeholder="Type a message...">
+                      <button class="wa-send-btn" id="wa-send-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="22" y1="2" x2="11" y2="13"></line>
+                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- diagnostics console -->
+              <div class="console-panel">
+                <div class="console-header">
+                  <div class="console-pulse"></div>
+                  <div class="console-title">Uraai Diagnostics Engine</div>
+                  <div class="console-desc">Real-time triggers and action logs.</div>
+                </div>
+                <div class="console-body" id="console-body">
+                  <!-- logs -->
+                </div>
+                <div class="console-actions-row">
+                  <button class="btn-console-action" onclick="simulateIncomingMessage()">💬 Simulator Msg</button>
+                  <button class="btn-console-action" onclick="triggerNotification('📢 System Alert', 'Uraai cloud webhooks connected. Delay under 20ms.')">⚡ Test Status</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Screen -->
+        <div class="screen" id="analytics">
+          <div class="app-screen-header">
+            <h3>Analytics Dashboard</h3>
+            <p>Visualizing total response queries, lead generation speeds, and satisfaction scores.</p>
+          </div>
+
+          <div class="analytics-desktop-layout">
+            <div class="seg" id="analytics-segment">
+              <div class="seg-opt">Today</div>
+              <div class="seg-opt on">This week</div>
+              <div class="seg-opt">Month</div>
+            </div>
+
+            <div class="kpi-strip">
+              <div class="kpi">
+                <div class="kpi-val">8.4k</div>
+                <div class="kpi-label">Total replies</div>
+                <div class="kpi-delta up">↑ 23%</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-val">218</div>
+                <div class="kpi-label">Leads saved</div>
+                <div class="kpi-delta up">↑ 11%</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-val">1.9s</div>
+                <div class="kpi-label">Avg reply speed</div>
+                <div class="kpi-delta up">↑ Faster</div>
+              </div>
+            </div>
+
+            <div class="analytics-charts-row">
+              <div class="chart-card">
+                <div class="chart-card-head">
+                  <h4>Daily reply volume</h4>
+                  <span>This week</span>
+                </div>
+                <div class="bar-group">
+                  <div class="bw"><div class="b" style="height:42px"></div><div class="bl">Mon</div></div>
+                  <div class="bw"><div class="b med" style="height:58px"></div><div class="bl">Tue</div></div>
+                  <div class="bw"><div class="b" style="height:36px"></div><div class="bl">Wed</div></div>
+                  <div class="bw"><div class="b hi" style="height:78px"></div><div class="bl">Thu</div></div>
+                  <div class="bw"><div class="b med" style="height:64px"></div><div class="bl">Fri</div></div>
+                  <div class="bw"><div class="b" style="height:50px"></div><div class="bl">Sat</div></div>
+                  <div class="bw"><div class="b" style="height:28px"></div><div class="bl">Sun</div></div>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="chart-card-head"><h4>Channel split</h4></div>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                      <span style="font-size:12px;font-weight:600;color:var(--ink-60);">📱 WhatsApp</span>
+                      <span style="font-size:12px;font-weight:700;color:var(--ink);">65%</span>
+                    </div>
+                    <div style="height:6px;background:var(--surface);border-radius:3px;"><div style="width:65%;height:100%;background:#25D366;border-radius:3px;"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                      <span style="font-size:12px;font-weight:600;color:var(--ink-60);">📸 Instagram</span>
+                      <span style="font-size:12px;font-weight:700;color:var(--ink);">25%</span>
+                    </div>
+                    <div style="height:6px;background:var(--surface);border-radius:3px;"><div style="width:25%;height:100%;background:#E1306C;border-radius:3px;"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                      <span style="font-size:12px;font-weight:600;color:var(--ink-60);">📧 Email</span>
+                      <span style="font-size:12px;font-weight:700;color:var(--ink);">10%</span>
+                    </div>
+                    <div style="height:6px;background:var(--surface);border-radius:3px;"><div style="width:10%;height:100%;background:#2563EB;border-radius:3px;"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lead-card">
+              <h4>Active Lead Database</h4>
+              <div id="analytics-leads-container">
+                <p style="font-size:13px;color:var(--ink-40);text-align:center;padding:20px 0;">
+                  No leads yet — leads appear here when customers message your bot
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Billing Screen -->
+        <div class="screen" id="pricing">
+          <div class="app-screen-header">
+            <h3>Manage Plan & Billing</h3>
+            <p>Upgrade or modify your automated responder subscription limits.</p>
+          </div>
+
+          <div class="billing-plans-grid">
+            <div class="plan" data-tier="starter">
+              <div class="plan-top-row">
+                <div>
+                  <div class="plan-tier">Starter</div>
+                  <div class="plan-name-big">Free</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="plan-price-big">₹0</div>
+                  <div class="plan-period">forever</div>
+                </div>
+              </div>
+              <div class="plan-divider"></div>
+              <ul class="feat-list">
+                <li class="feat-item"><div class="feat-check">✓</div>1 WhatsApp bot</li>
+                <li class="feat-item"><div class="feat-check">✓</div>50 AI replies per month</li>
+                <li class="feat-item"><div class="feat-check">✓</div>5 FAQ templates</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Tamil + Hindi + English</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Lead inbox</li>
+                <li class="feat-item"><div class="feat-check">✓</div>7-day reply history</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Weekly summary email</li>
+              </ul>
+              <button class="plan-cta cta-outline inline-price-cta" data-tier="starter">Select Starter</button>
+            </div>
+
+            <div class="plan featured" data-tier="pro">
+              <div class="plan-badge">⭐ MOST POPULAR</div>
+              <div class="plan-top-row">
+                <div>
+                  <div class="plan-tier" style="color:rgba(255,255,255,0.4)">Growth</div>
+                  <div class="plan-name-big">Pro</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="plan-price-big">₹499</div>
+                  <div class="plan-period">/month</div>
+                </div>
+              </div>
+              <div class="plan-divider"></div>
+              <ul class="feat-list">
+                <li class="feat-item"><div class="feat-check">✓</div>3 WhatsApp bots</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Instagram + Email automation</li>
+                <li class="feat-item"><div class="feat-check">✓</div>5 languages incl. Telugu, Malayalam</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Unlimited AI replies</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Auto follow-up reminders</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Appointment booking calendar</li>
+                <li class="feat-item"><div class="feat-check">✓</div>Lead export to CSV</li>
+                <li class="feat-item"><div class="feat-check">✓</div>3 team members</li>
+                <li class="feat-item"><div class="feat-check">✓</div>WhatsApp broadcast — 50/month</li>
+              </ul>
+              <button class="plan-cta cta-fill inline-price-cta" data-tier="pro">Upgrade to Pro</button>
+            </div>
+
+            <div class="plan" data-tier="max">
+              <div class="plan-top-row">
+                <div>
+                  <div class="plan-tier">Power</div>
+                  <div class="plan-name-big">Max</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="plan-price-big">₹999</div>
+                  <div class="plan-period">/month</div>
+                </div>
+              </div>
+              <div class="plan-divider"></div>
+              <ul class="feat-list">
+                <li class="feat-item"><div class="feat-check ember">✓</div>Unlimited bots</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>8+ languages</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>AI lead scoring (Hot/Warm/Cold)</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>Multi-step follow-up sequences</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>Razorpay payment collection</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>CRM integration</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>Auto-generated monthly reports</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>10 team members + roles</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>Unlimited WhatsApp broadcast</li>
+                <li class="feat-item"><div class="feat-check ember">✓</div>Priority call + WhatsApp support</li>
+              </ul>
+              <button class="plan-cta cta-ember inline-price-cta" data-tier="max">Get Max</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Notification Banner (Global overlay) -->
+  <div class="notification-banner" id="notification-banner">
+    <div class="notification-icon">💬</div>
+    <div class="notification-content">
+      <div class="notification-title" id="notif-title">WhatsApp Bot</div>
+      <div class="notification-text" id="notif-text">Incoming customer query.</div>
+    </div>
+    <div class="notification-time">now</div>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-card">
+      <div class="modal-close-icon" id="auth-modal-close">✕</div>
+      <div class="modal-header-tabs">
+        <div class="modal-tab-opt active" id="tab-opt-signup">Sign Up</div>
+        <div class="modal-tab-opt" id="tab-opt-login">Log In</div>
+      </div>
+
+      <!-- Sign Up Form -->
+      <div id="form-panel-signup">
+        <div class="modal-title">Create Account</div>
+        <div class="modal-desc">Configure your bot instance in seconds. No credit card required.</div>
+        
+        <div class="modal-form-block">
+          <label>Full Name</label>
+          <input type="text" class="modal-field" id="su-fullname" placeholder="e.g. Rohan Mehta">
+        </div>
+        <div class="modal-form-block">
+          <label>Email Address</label>
+          <input type="email" class="modal-field" id="su-email" placeholder="e.g. rohan@mehtasalon.com">
+        </div>
+        <div class="form-group-grid">
+          <div class="modal-form-block">
+            <label>Password</label>
+            <input type="password" class="modal-field" id="su-password" placeholder="••••••••">
+          </div>
+          <div class="modal-form-block">
+            <label>Phone Number</label>
+            <input type="tel" class="modal-field" id="su-phone" placeholder="e.g. +91 98765 43210">
+          </div>
+        </div>
+        <div class="form-group-grid">
+          <div class="modal-form-block">
+            <label>Business Name</label>
+            <input type="text" class="modal-field" id="su-busname" placeholder="e.g. Mehta Salon">
+          </div>
+          <div class="modal-form-block">
+            <label>Business Type</label>
+            <select class="modal-field" id="su-bustype">
+              <option value="Salon & Beauty">Salon & Beauty</option>
+              <option value="Medical Clinic">Medical Clinic</option>
+              <option value="Education/Coaching">Education / Coaching</option>
+              <option value="E-commerce Store">E-commerce Store</option>
+              <option value="Restaurant/Café">Restaurant / Café</option>
+              <option value="Other Business">Other Service</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-form-block">
+          <label>City</label>
+          <input type="text" class="modal-field" id="su-city" placeholder="e.g. Chennai">
+          <span class="form-hint">Used to recommend local languages.</span>
+        </div>
+        <button class="modal-submit-btn" id="su-btn-submit">Continue to Profile Setup →</button>
+      </div>
+
+      <!-- Log In Form -->
+      <div id="form-panel-login" style="display:none;">
+        <div class="modal-title">Welcome Back</div>
+        <div class="modal-desc">Access your bot and diagnostics dashboard.</div>
+        
+        <div class="modal-form-block">
+          <label>Email Address</label>
+          <input type="email" class="modal-field" id="li-email" placeholder="e.g. sanjay@priyasalon.com">
+        </div>
+        <div class="modal-form-block">
+          <label>Password</label>
+          <input type="password" class="modal-field" id="li-password" placeholder="••••••••">
+        </div>
+        <button class="modal-submit-btn" id="li-btn-submit">Access Dashboard →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business Profile Setup Onboarding -->
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal-card">
+      <div class="modal-title">Business Profile Onboarding</div>
+      <div class="modal-desc">Provide details to bootstrap your automated answers.</div>
+
+      <div class="modal-form-block">
+        <label>Business Category</label>
+        <select class="modal-field" id="prof-category">
+          <option value="Beauty Parlour & Hair Styling">Beauty Parlour & Hair Styling</option>
+          <option value="Nail & Spa Treatments">Nail & Spa Treatments</option>
+          <option value="Consultancy & Services">Consultancy & Services</option>
+          <option value="Local Store Retail">Local Store Retail</option>
+        </select>
+      </div>
+
+      <div class="modal-form-block">
+        <label>Preferred Languages</label>
+        <div style="display:flex; gap:16px; margin-top:4px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; text-transform:none; color:white;">
+            <input type="checkbox" id="prof-lang-tamil" value="tamil" checked> தமிழ்
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; text-transform:none; color:white;">
+            <input type="checkbox" id="prof-lang-english" value="english" checked> English
+          </label>
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; text-transform:none; color:white;">
+            <input type="checkbox" id="prof-lang-hindi" value="hindi"> हिंदी
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group-grid">
+        <div class="modal-form-block">
+          <label>WhatsApp Bot Number</label>
+          <input type="tel" class="modal-field" id="prof-wanumber" placeholder="e.g. +91 98765 43210">
+        </div>
+        <div class="modal-form-block">
+          <label>Business Email</label>
+          <input type="email" class="modal-field" id="prof-email" placeholder="e.g. info@mehtasalon.com">
+        </div>
+      </div>
+
+      <div class="form-group-grid">
+        <div class="modal-form-block">
+          <label>Hours Open</label>
+          <input type="text" class="modal-field" id="prof-open" value="9:00 AM">
+        </div>
+        <div class="modal-form-block">
+          <label>Hours Close</label>
+          <input type="text" class="modal-field" id="prof-close" value="8:00 PM">
+        </div>
+      </div>
+
+      <div class="modal-form-block">
+        <label>Instagram Handle (Optional)</label>
+        <input type="text" class="modal-field" id="prof-ighandle" placeholder="@mehtasalon_official">
+      </div>
+
+      <div class="modal-form-block">
+        <label>Logo Upload (Mock)</label>
+        <input type="file" class="modal-field" id="prof-logo-file" style="padding: 8px;">
+      </div>
+
+      <button class="modal-submit-btn" id="prof-btn-submit">Complete Setup & Launch Bot 🚀</button>
+    </div>
+  </div>
+
+  <!-- Pricing Razorpay Payment Modal -->
+  <div class="modal-overlay" id="payment-modal">
+    <div class="modal-card">
+      <div class="modal-close-icon" id="payment-modal-close">✕</div>
+      <div id="payment-inputs-panel">
+        <div class="modal-title">Razorpay Secure Checkout</div>
+        <div class="modal-desc" id="payment-package-summary">Pro Subscription — ₹499/month</div>
+
+        <div class="modal-form-block">
+          <label>Billing Name</label>
+          <input type="text" class="modal-field" id="pay-name" placeholder="Name on invoice">
+        </div>
+
+        <div class="modal-form-block">
+          <label>Card / UPI Details</label>
+          <input type="text" class="modal-field" id="pay-details" placeholder="e.g. 4111 2222 3333 4444 or vpa@upi">
+        </div>
+
+        <div class="modal-form-block">
+          <label>GST Number (Optional)</label>
+          <input type="text" class="modal-field" id="pay-gst" placeholder="e.g. 33AAAAA1111A1Z1">
+        </div>
+
+        <div class="modal-form-block">
+          <label>Billing Address</label>
+          <textarea class="modal-field" id="pay-address" rows="2" style="resize:none;" placeholder="Legal billing address"></textarea>
+        </div>
+
+        <button class="modal-submit-btn" id="pay-btn-submit">💳 Authorize Payment via Razorpay</button>
+      </div>
+
+      <div id="payment-loading-panel" class="payment-processing" style="display:none;">
+        <div class="spinner"></div>
+        <h3 style="margin-bottom:8px;">Processing Transaction</h3>
+        <p style="font-size:12px; color:rgba(255,255,255,0.4);">Connecting to Razorpay API Gateway...</p>
+      </div>
+
+      <div id="payment-success-panel" class="payment-processing" style="display:none;">
+        <div class="payment-success-icon">✓</div>
+        <h3 style="margin-bottom:8px; color:var(--green);">Payment Successful!</h3>
+        <p style="font-size:12px; color:rgba(255,255,255,0.5);" id="payment-success-msg">Your subscription has been activated.</p>
+        <button class="modal-submit-btn" id="payment-success-close-btn" style="margin-top:24px; background:var(--green);">Return to Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ dialog -->
+  <div class="modal-overlay" id="faq-modal">
+    <div class="modal-card">
+      <div class="modal-title" id="modal-title-text">Edit FAQ Auto-Reply</div>
+      
+      <div class="form-block" style="margin-bottom:14px;">
+        <label style="font-size:10px; font-weight:700; color:var(--ink-60);">Customer Query Phrase</label>
+        <input type="text" class="field" id="modal-q-input" style="background:#F5F4F8;" placeholder="e.g. Price of haircut?">
+      </div>
+
+      <div class="form-block" style="margin-bottom:14px;">
+        <label style="font-size:10px; font-weight:700; color:var(--ink-60);">Automated Answer</label>
+        <textarea class="field" id="modal-a-input" style="background:#F5F4F8; resize:none;" rows="3" placeholder="e.g. Haircut starts from ₹250."></textarea>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="modal-btn" id="modal-cancel-btn" style="background:var(--surface); color:var(--ink-60);">Cancel</button>
+        <button class="modal-btn" id="modal-save-btn" style="background:var(--violet); color:white;">Save FAQ</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
