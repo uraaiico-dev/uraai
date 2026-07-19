@@ -1514,7 +1514,7 @@ function launchFacebookEmbeddedSignup() {
       showWhatsAppSetupError('Connection cancelled. Please try again.');
     }
   }, {
-    scope: 'whatsapp_business_management,whatsapp_business_messaging,pages_show_list,business_management',
+    scope: 'whatsapp_business_management,whatsapp_business_messaging',
     extras: {
       setup: {},
       featureType: 'whatsapp_embedded_signup',
