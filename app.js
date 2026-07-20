@@ -4,7 +4,7 @@
 const state = {
   activeScreen: 'onboarding',
   currentPlan: 'starter', // starter, pro, max
-  welcomeMessage: "வணக்கம்! Welcome to Priya Beauty Salon 💇‍♀️\nHow can I help you today?",
+  welcomeMessage: "",
   openTime: "9:00 AM",
   closeTime: "8:00 PM",
   languages: ['tamil', 'english'], // tamil, english, hindi, telugu, malayalam
@@ -830,6 +830,10 @@ async function handleLogInSubmit() {
       state.languages = botSettings.languages || ['english'];
     }
 
+    if (!botSettings || !botSettings.welcome_message) {
+      state.welcomeMessage = `வணக்கம்! Welcome to ${profile.business_name}.\nHow can I help you today?`;
+    }
+
     if (userFaqs.length > 0) {
       state.faqs = userFaqs.map(f => ({ q: f.question, a: f.answer, id: f.id }));
     }
@@ -1284,21 +1288,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       const textSpan = saveChangesBtn.querySelector('span');
       textSpan.innerText = 'Saving...';
 
+      console.log('Save clicked — supabaseId:', state.userProfile.supabaseId);
+      console.log('State to save:', {
+        welcomeMessage: state.welcomeMessage,
+        openTime: state.openTime,
+        closeTime: state.closeTime,
+        languages: state.languages
+      });
+
       try {
-        if (state.userProfile.supabaseId) {
-          await saveBotSettings(state.userProfile.supabaseId, {
-            welcomeMessage: state.welcomeMessage,
-            openTime: state.openTime,
-            closeTime: state.closeTime,
-            languages: state.languages,
-            waNumber: state.userProfile.waNumber,
-            igHandle: state.userProfile.igHandle,
-            busEmail: state.userProfile.busEmail
-          });
-          addLog('system', 'Bot settings saved to Supabase database.', 'success');
+        if (!state.userProfile.supabaseId) {
+          throw new Error('Not logged in — please log out and log back in');
         }
+
+        await saveBotSettings(state.userProfile.supabaseId, {
+          welcomeMessage: state.welcomeMessage,
+          openTime: state.openTime,
+          closeTime: state.closeTime,
+          languages: state.languages,
+          waNumber: state.userProfile.waNumber,
+          igHandle: state.userProfile.igHandle,
+          busEmail: state.userProfile.busEmail
+        });
+
+        console.log('Save successful!');
+        addLog('system', 'Bot settings saved to Supabase database.', 'success');
         triggerNotification('✓ Settings Saved', 'Bot configuration synced to cloud.');
+
       } catch (err) {
+        console.error('Save failed:', err);
         triggerNotification('⚠️ Save Failed', err.message);
       }
 
