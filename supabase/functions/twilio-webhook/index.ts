@@ -208,34 +208,51 @@ If asked anything unrelated to ${business_name}, politely decline and suggest co
         .eq("user_id", user_id);
     }
 
-    // ─── 9. Save to whatsapp_logs ───
+    // Clean phone number — remove "whatsapp:" prefix
+    const cleanFromNumber = fromNumber.replace("whatsapp:", "").trim();
+
+    console.log("[LEAD DEBUG] user_id:", user_id);
+    console.log("[LEAD DEBUG] fromNumber:", fromNumber);
+    console.log("[LEAD DEBUG] cleanFromNumber:", cleanFromNumber);
+
+    // 7. Save to whatsapp_logs table
     await supabase.from("whatsapp_logs").insert({
-      user_id,
+      user_id: user_id,
       direction: "inbound",
-      from_number: fromNumber,
+      from_number: cleanFromNumber,
       to_number: toNumber,
       message_body: customerMessage,
       ai_reply: replyMessage,
       status: twilioOk ? "replied" : "failed",
     });
 
-    // ─── 10. Save lead if new ───
-    const { data: existingLead } = await supabase
+    // 8. Save customer as lead if not already saved
+    const { data: existingLead, error: leadCheckError } = await supabase
       .from("leads")
       .select("id")
       .eq("user_id", user_id)
-      .eq("phone", fromNumber)
+      .eq("phone", cleanFromNumber)
       .maybeSingle();
 
+    console.log("[LEAD] Existing lead check:", existingLead, "Error:", leadCheckError);
+
     if (!existingLead) {
-      await supabase.from("leads").insert({
-        user_id,
-        name: "Unknown (WhatsApp)",
-        phone: fromNumber,
-        channel: "whatsapp",
-        message: customerMessage,
-      });
-      console.log(`[LEAD] New lead saved: ${fromNumber}`);
+      const { error: leadInsertError } = await supabase
+        .from("leads")
+        .insert({
+          user_id: user_id,
+          name: "Unknown (WhatsApp)",
+          phone: cleanFromNumber,
+          channel: "whatsapp",
+          message: customerMessage,
+        });
+      if (leadInsertError) {
+        console.error("[LEAD] Insert failed:", leadInsertError);
+      } else {
+        console.log("[LEAD] New lead saved:", cleanFromNumber);
+      }
+    } else {
+      console.log("[LEAD] Already exists:", cleanFromNumber);
     }
 
     return new Response("OK", { status: 200 });
