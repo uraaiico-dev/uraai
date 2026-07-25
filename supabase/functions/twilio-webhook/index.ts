@@ -161,18 +161,25 @@ serve(async (req) => {
     if (isClosed) {
       replyMessage = `We're currently closed. We open at ${open_time}. Please message us then!`;
     } else {
+      const knowledgeBase = botSettings.business_knowledge
+        || 'No business information set up yet.';
+
       const faqText = faqs.length > 0
-        ? faqs.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n")
-        : "No FAQs configured yet.";
+        ? "\nAdditional FAQs:\n" + faqs.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n")
+        : "";
 
       const systemPrompt = `You are a customer service assistant for ${business_name}.
-You can ONLY answer questions about this specific business.
+
+Everything you know about this business:
+${knowledgeBase}${faqText}
 Business hours: ${open_time} to ${close_time}.
-FAQs:
-${faqText}
-Language: Reply in ${languages?.join(", ") || "English"} only.
-Keep replies concise and helpful.
-If asked anything unrelated to ${business_name}, politely decline and suggest contacting the business directly.`;
+
+RULES:
+- ONLY answer questions about ${business_name}
+- Reply in ${languages?.join(', ') || 'English'}
+- Be friendly, concise, helpful
+- If unsure, say "Please contact us directly for more details"
+- Never make up information not listed above`;
 
       const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
       const geminiResponse = await fetch(

@@ -1691,10 +1691,110 @@ async function renderRecentLeads() {
 
 function formatTimeAgo(timestamp) {
   if (!timestamp) return '';
-  const diff = Date.now() - new Date(timestamp).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hr ago`;
-  return `${Math.floor(hrs / 24)} days ago`;
+    const diff = Date.now() - new Date(timestamp).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins} min ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hr ago`;
+    return `${Math.floor(hrs / 24)} days ago`;
+  }
+
+// --- AI ONBOARDING CHAT ---
+const ONBOARDING_QUESTIONS = [
+  "வணக்கம்! I'm going to set up your WhatsApp bot. First — what are your business timings? (e.g. 9am to 8pm, Monday to Saturday)",
+  "What services or products do you offer?",
+  "What are your prices? (Rough estimates are fine)",
+  "Where are you located?",
+  "Any special offers or things customers should know?",
+  "What's the best way for customers to reach you directly if needed?"
+];
+
+let onboardingStep = 0;
+let collectedAnswers = [];
+
+async function startOnboarding() {
+  onboardingStep = 0;
+  collectedAnswers = [];
+  document.getElementById('onboarding-messages').innerHTML = '';
+  addOnboardingMessage('bot', ONBOARDING_QUESTIONS[0]);
 }
+
+async function handleOnboardingReply(userMessage) {
+  if (!userMessage.trim()) return;
+  // Show user message
+  addOnboardingMessage('user', userMessage);
+  collectedAnswers.push(userMessage);
+  onboardingStep++;
+
+  if (onboardingStep < ONBOARDING_QUESTIONS.length) {
+    // Ask next question
+    setTimeout(() => {
+      addOnboardingMessage('bot', ONBOARDING_QUESTIONS[onboardingStep]);
+    }, 500);
+  } else {
+    // All questions answered — save to database
+    addOnboardingMessage('bot', '⏳ Building your bot...');
+    await saveBusinessKnowledge(collectedAnswers);
+  }
+}
+
+async function saveBusinessKnowledge(answers) {
+  // Format answers into knowledge base
+  const questions = [
+    'Business timings',
+    'Services/Products offered', 
+    'Prices',
+    'Location',
+    'Special offers/notes',
+    'Direct contact'
+  ];
+
+  const knowledge = questions.map((q, i) =>
+    `${q}: ${answers[i] || 'Not specified'}`
+  ).join('\\n');
+
+  // Save to Supabase
+  if (state.userProfile.supabaseId) {
+    await db.from('bot_settings').upsert({
+      user_id: state.userProfile.supabaseId,
+      business_knowledge: knowledge,
+      onboarding_complete: true
+    });
+  }
+
+  state.businessKnowledge = knowledge;
+  addOnboardingMessage('bot',
+    `🎉 Your bot is ready! Here's what it knows:\n\n${knowledge}\n\nYour customers will now get instant answers 24/7!`
+  );
+}
+
+function addOnboardingMessage(sender, text) {
+  const container = document.getElementById('onboarding-messages');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = `onboarding-msg onboarding-msg-${sender}`;
+  div.innerText = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+// Bind onboarding events
+document.addEventListener('DOMContentLoaded', () => {
+  const sendBtn = document.getElementById('onboarding-send-btn');
+  const input = document.getElementById('onboarding-input');
+  if (sendBtn && input) {
+    sendBtn.onclick = () => {
+      handleOnboardingReply(input.value);
+      input.value = '';
+    };
+    input.onkeypress = (e) => {
+      if (e.key === 'Enter') {
+        handleOnboardingReply(input.value);
+        input.value = '';
+      }
+    };
+  }
+  
+  // start automatically when DOM loads if needed or user visits Bot Builder
+  setTimeout(() => startOnboarding(), 1000);
+});

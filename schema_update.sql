@@ -68,3 +68,8 @@ ON public.bot_settings(wa_phone_number);
 ALTER TABLE public.bot_settings
 ADD COLUMN IF NOT EXISTS reply_count_this_month INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS reply_reset_date DATE DEFAULT CURRENT_DATE;
+
+-- Add AI Onboarding knowledge base
+ALTER TABLE public.bot_settings
+ADD COLUMN IF NOT EXISTS business_knowledge TEXT,
+ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN DEFAULT false;
