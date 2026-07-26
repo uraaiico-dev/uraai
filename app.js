@@ -1699,102 +1699,328 @@ function formatTimeAgo(timestamp) {
     return `${Math.floor(hrs / 24)} days ago`;
   }
 
-// --- AI ONBOARDING CHAT ---
-const ONBOARDING_QUESTIONS = [
-  "வணக்கம்! I'm going to set up your WhatsApp bot. First — what are your business timings? (e.g. 9am to 8pm, Monday to Saturday)",
-  "What services or products do you offer?",
-  "What are your prices? (Rough estimates are fine)",
-  "Where are you located?",
-  "Any special offers or things customers should know?",
-  "What's the best way for customers to reach you directly if needed?"
-];
+// ═══ AI ONBOARDING CHAT ═══
 
-let onboardingStep = 0;
-let collectedAnswers = [];
+// Business-specific question sets
+const BUSINESS_QUESTION_SETS = {
+  'Salon & Beauty': {
+    icon: '💇',
+    questions: [
+      { q: "What are your salon timings? 🕐", label: "Timings", placeholder: "e.g. 9am–9pm, Mon–Sat", chips: ["9am–9pm daily", "10am–8pm Mon–Sat"] },
+      { q: "What services do you offer? (hair, skin, bridal etc.) ✂️", label: "Services", placeholder: "e.g. Haircut, facial, bridal, hair color, nail art", chips: ["Haircut & styling", "Bridal packages", "Skin & facial"] },
+      { q: "What are your charges? 💰\nE.g. men's cut, women's cut, facial prices?", label: "Prices", placeholder: "Men cut ₹150, Women cut ₹350, Facial ₹500...", chips: ["Share price list", "Starting from ₹100", "Varies by service"] },
+      { q: "Do you take appointments or walk-ins? 📅", label: "Booking", placeholder: "e.g. Walk-ins welcome, or WhatsApp 9876543210 to book", chips: ["Walk-ins only", "Appointment needed", "Both welcome"] },
+      { q: "Any ongoing offers or packages? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. 10% off on Sundays, Monthly package ₹999...", chips: ["No offers now", "Weekend discount", "Membership available"] }
+    ]
+  },
+  'Clinic / Hospital': {
+    icon: '🏥',
+    questions: [
+      { q: "What are your clinic timings and days? 🕐", label: "Timings", placeholder: "e.g. Mon–Sat 9am–1pm and 5pm–9pm", chips: ["9am–9pm daily", "Morning & evening", "Emergency 24/7"] },
+      { q: "What treatments or specialties do you offer? 🩺", label: "Treatments", placeholder: "e.g. General consultation, diabetes care, orthopedic...", chips: ["General consultation", "Dental care", "Specialist clinic"] },
+      { q: "What is your consultation fee? 💊", label: "Fees", placeholder: "e.g. General ₹300, Specialist ₹500, Follow-up ₹150", chips: ["₹200–₹500 range", "Free first visit", "Varies by doctor"] },
+      { q: "How should patients book an appointment? 📞", label: "Booking", placeholder: "e.g. Call 9876543210 or walk in directly", chips: ["Walk-in only", "Call to book", "WhatsApp booking"] },
+      { q: "Any facilities available? (lab, pharmacy, X-ray etc.) 🔬\n(Type 'skip' if none)", label: "Facilities", placeholder: "e.g. In-house lab, pharmacy, ECG, ultrasound", chips: ["Basic facilities", "Full diagnostic", "Skip"] }
+    ]
+  },
+  'Gym / Fitness': {
+    icon: '💪',
+    questions: [
+      { q: "What are your gym timings? 🕐", label: "Timings", placeholder: "e.g. 5am–10pm, all days", chips: ["5am–10pm daily", "6am–9pm daily", "24/7 gym"] },
+      { q: "What facilities do you have? 🏋️", label: "Facilities", placeholder: "e.g. Cardio, weights, AC, steam room, personal trainer", chips: ["Basic gym", "Full equipped", "With trainer"] },
+      { q: "What are your membership plans? 💰", label: "Plans", placeholder: "Monthly ₹1000, Quarterly ₹2500, Annual ₹8000", chips: ["Share full plan", "Monthly plan only", "Varies"] },
+      { q: "Do you offer personal training? 🏃", label: "Training", placeholder: "e.g. PT available at ₹500/session extra", chips: ["Yes included", "Extra charge", "Not available"] },
+      { q: "Any offers for new members? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. First month free, Free trial for 3 days", chips: ["Free trial", "Joining offer", "Skip"] }
+    ]
+  },
+  'Coaching Center': {
+    icon: '📚',
+    questions: [
+      { q: "What subjects or courses do you teach? 📖", label: "Courses", placeholder: "e.g. Maths, Science, IIT coaching, NEET, Spoken English", chips: ["School subjects", "Competitive exams", "Skill courses"] },
+      { q: "What are your class timings? 🕐", label: "Timings", placeholder: "e.g. Morning 7–9am, Evening 5–8pm", chips: ["Morning batch", "Evening batch", "Both batches"] },
+      { q: "What are your fees? 💰", label: "Fees", placeholder: "e.g. ₹1500/month per subject, ₹4000 for full package", chips: ["Share fee structure", "Subject-wise fees", "Package available"] },
+      { q: "Which classes or grades do you teach? 🎓", label: "Grades", placeholder: "e.g. Class 6–12, College, All ages welcome", chips: ["Class 6–10", "Class 11–12", "All grades"] },
+      { q: "Any demo class or free trial available? 🎁\n(Type 'skip' if none)", label: "Trial", placeholder: "e.g. Free demo class on Saturdays", chips: ["Free demo yes", "No trial", "Skip"] }
+    ]
+  },
+  'Restaurant / Food': {
+    icon: '🍽️',
+    questions: [
+      { q: "What type of food do you serve? 🍛", label: "Cuisine", placeholder: "e.g. South Indian, North Indian, Chinese, Biryani", chips: ["South Indian", "Multi-cuisine", "Biryani specialist"] },
+      { q: "What are your timings? 🕐", label: "Timings", placeholder: "e.g. 8am–10pm daily, closed Tuesday", chips: ["Open all days", "Lunch & dinner", "Breakfast too"] },
+      { q: "Do you offer home delivery or takeaway? 🛵", label: "Delivery", placeholder: "e.g. Delivery via Swiggy/Zomato, self-pickup available", chips: ["Delivery available", "Takeaway only", "Dine-in + delivery"] },
+      { q: "What's your popular dish and approximate price range? 💰", label: "Prices", placeholder: "e.g. Biryani ₹120, Meals ₹80, Family pack ₹350", chips: ["Share menu price", "Budget-friendly", "Premium dining"] },
+      { q: "Any special offers or bulk orders? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. Party orders, corporate lunch, weekend specials", chips: ["Bulk order available", "No special offers", "Skip"] }
+    ]
+  },
+  'default': {
+    icon: '🏪',
+    questions: [
+      { q: "What are your business timings? 🕐", label: "Timings", placeholder: "e.g. 9am–8pm, Monday to Saturday", chips: ["9am–9pm daily", "10am–8pm Mon–Sat", "Flexible timing"] },
+      { q: "What products or services do you offer? 📦", label: "Services", placeholder: "Describe what you sell or do...", chips: [] },
+      { q: "What are your prices? 💰", label: "Prices", placeholder: "Give rough price range or starting price", chips: ["Share price list", "Varies by order", "Contact for quote"] },
+      { q: "How should customers reach you or place orders? 📞", label: "Contact", placeholder: "e.g. WhatsApp, call, walk in", chips: ["WhatsApp only", "Call us", "Walk-in welcome"] },
+      { q: "Any special offers? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "Any discount, combo or package?", chips: ["No offers", "Weekend discount", "Skip"] }
+    ]
+  }
+};
 
-async function startOnboarding() {
-  onboardingStep = 0;
-  collectedAnswers = [];
-  document.getElementById('onboarding-messages').innerHTML = '';
-  addOnboardingMessage('bot', ONBOARDING_QUESTIONS[0]);
+// Location question (always asked)
+const LOCATION_QUESTION = {
+  q: "Where is your business located? 📍\nYou can type your address OR tap the button to share your location.",
+  label: "Location",
+  placeholder: "e.g. Near bus stand, Anna Nagar, Chennai...",
+  chips: ["Share my location 📍", "Type address instead"],
+  isLocation: true
+};
+
+// Final open-ended question
+const FINAL_QUESTION = {
+  q: "Almost done! 🎉 Is there anything else you want your bot to know? (Special instructions, languages, anything!)\n\nType 'no' if nothing extra.",
+  label: "Extra info",
+  placeholder: "e.g. We speak Tamil and English, Parking available, Ladies only...",
+  chips: ["Nothing extra", "Tamil only", "Ladies only"]
+};
+
+let obdStep = 0;
+let obdAnswers = [];
+let obdQuestions = [];
+let obdIsTyping = false;
+
+function getBusinessQuestions() {
+  const bizType = state.userProfile.businessType || 'default';
+  const questionSet = BUSINESS_QUESTION_SETS[bizType] || BUSINESS_QUESTION_SETS['default'];
+  return [...questionSet.questions, LOCATION_QUESTION, FINAL_QUESTION];
 }
 
-async function handleOnboardingReply(userMessage) {
-  if (!userMessage.trim()) return;
-  // Show user message
-  addOnboardingMessage('user', userMessage);
-  collectedAnswers.push(userMessage);
-  onboardingStep++;
-
-  if (onboardingStep < ONBOARDING_QUESTIONS.length) {
-    // Ask next question
-    setTimeout(() => {
-      addOnboardingMessage('bot', ONBOARDING_QUESTIONS[onboardingStep]);
-    }, 500);
-  } else {
-    // All questions answered — save to database
-    addOnboardingMessage('bot', '⏳ Building your bot...');
-    await saveBusinessKnowledge(collectedAnswers);
-  }
+function updateObdProgress(step) {
+  const total = obdQuestions.length;
+  const pct = Math.round((step / total) * 100);
+  const bar = document.getElementById('obd-progress-bar');
+  const label = document.getElementById('obd-progress-label');
+  const count = document.getElementById('obd-progress-count');
+  if (bar) bar.style.width = pct + '%';
+  if (count) count.textContent = step + ' / ' + total;
+  const labels = ['Getting started', 'Timings saved ✓', 'Services saved ✓',
+    'Prices saved ✓', 'Location saved ✓', 'Offers saved ✓', 'Almost done!', 'All set! 🎉'];
+  if (label) label.textContent = labels[Math.min(step, labels.length - 1)];
 }
 
-async function saveBusinessKnowledge(answers) {
-  // Format answers into knowledge base
-  const questions = [
-    'Business timings',
-    'Services/Products offered', 
-    'Prices',
-    'Location',
-    'Special offers/notes',
-    'Direct contact'
-  ];
+function showObdTyping() {
+  const msgs = document.getElementById('onboarding-messages');
+  if (!msgs) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'obd-typing-wrap'; wrap.id = 'obd-typing';
+  const icon = document.createElement('div');
+  icon.className = 'obd-msg-icon'; icon.textContent = '🤖';
+  const dots = document.createElement('div');
+  dots.className = 'obd-typing-dots';
+  for (let i = 0; i < 3; i++) { const s = document.createElement('span'); dots.appendChild(s); }
+  wrap.appendChild(icon); wrap.appendChild(dots);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
 
-  const knowledge = questions.map((q, i) =>
-    `${q}: ${answers[i] || 'Not specified'}`
-  ).join('\\n');
+function removeObdTyping() {
+  const t = document.getElementById('obd-typing');
+  if (t) t.remove();
+}
 
-  // Save to Supabase
-  if (state.userProfile.supabaseId) {
-    await db.from('bot_settings').upsert({
-      user_id: state.userProfile.supabaseId,
-      business_knowledge: knowledge,
-      onboarding_complete: true
-    });
+function clearQuickReplies() {
+  const qr = document.getElementById('obd-quick-replies');
+  if (qr) qr.innerHTML = '';
+}
+
+function showQuickReplies(chips, isLocation) {
+  const qr = document.getElementById('obd-quick-replies');
+  if (!qr) return;
+  qr.innerHTML = '';
+  chips.forEach(chip => {
+    const btn = document.createElement('button');
+    btn.className = 'obd-qr-chip';
+    btn.textContent = chip;
+    btn.onclick = () => {
+      if (chip === 'Share my location 📍') {
+        requestLocationShare();
+      } else {
+        document.getElementById('onboarding-input').value = chip;
+        handleOnboardingReply(chip);
+      }
+    };
+    qr.appendChild(btn);
+  });
+}
+
+function requestLocationShare() {
+  if (!navigator.geolocation) {
+    handleOnboardingReply('Location sharing not supported — I will type my address');
+    return;
   }
-
-  state.businessKnowledge = knowledge;
-  addOnboardingMessage('bot',
-    `🎉 Your bot is ready! Here's what it knows:\n\n${knowledge}\n\nYour customers will now get instant answers 24/7!`
+  addObdMessage('bot', '📍 Getting your location...');
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = pos.coords.latitude.toFixed(5);
+      const lng = pos.coords.longitude.toFixed(5);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const data = await res.json();
+        const address = data.display_name || `${lat}, ${lng}`;
+        const shortAddress = address.split(',').slice(0, 4).join(',').trim();
+        handleOnboardingReply(`📍 ${shortAddress}`);
+      } catch {
+        handleOnboardingReply(`📍 GPS: ${lat}, ${lng}`);
+      }
+    },
+    () => {
+      addObdMessage('bot', "Couldn't access location. Please type your address instead 👇");
+    }
   );
 }
 
-function addOnboardingMessage(sender, text) {
-  const container = document.getElementById('onboarding-messages');
-  if (!container) return;
-  const div = document.createElement('div');
-  div.className = `onboarding-msg onboarding-msg-${sender}`;
-  div.innerText = text;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
+function addObdMessage(sender, text, tag) {
+  const msgs = document.getElementById('onboarding-messages');
+  if (!msgs) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'obd-msg obd-msg-' + sender;
+  if (sender === 'bot') {
+    const icon = document.createElement('div');
+    icon.className = 'obd-msg-icon'; icon.textContent = '🤖';
+    wrap.appendChild(icon);
+  }
+  const bubble = document.createElement('div');
+  bubble.className = 'obd-bubble obd-bubble-' + sender;
+  if (tag) {
+    const tagEl = document.createElement('span');
+    tagEl.className = 'obd-bubble-tag'; tagEl.textContent = tag;
+    bubble.appendChild(tagEl);
+  }
+  const content = document.createElement('div');
+  content.style.whiteSpace = 'pre-wrap'; content.textContent = text;
+  bubble.appendChild(content);
+  wrap.appendChild(wrap);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
-// Bind onboarding events
+async function startOnboarding() {
+  obdStep = 0;
+  obdAnswers = [];
+  obdQuestions = getBusinessQuestions();
+  const msgs = document.getElementById('onboarding-messages');
+  if (msgs) msgs.innerHTML = '';
+  clearQuickReplies();
+  updateObdProgress(0);
+  const bizType = state.userProfile.businessType || 'your business';
+  const icon = (BUSINESS_QUESTION_SETS[bizType] || BUSINESS_QUESTION_SETS['default']).icon || '🏪';
+  obdIsTyping = true;
+  showObdTyping();
+  setTimeout(() => {
+    removeObdTyping();
+    addObdMessage('bot', `வணக்கம்! ${icon} I'll help set up your WhatsApp bot for ${state.userProfile.businessName || 'your business'}.\n\nI have ${obdQuestions.length} quick questions — your customers will get perfect answers after this! Let's go 🚀`);
+    obdIsTyping = false;
+    setTimeout(() => askObdQuestion(), 600);
+  }, 800);
+}
+
+function askObdQuestion() {
+  if (obdStep >= obdQuestions.length) {
+    finishOnboarding();
+    return;
+  }
+  const q = obdQuestions[obdStep];
+  const input = document.getElementById('onboarding-input');
+  if (input) input.placeholder = q.placeholder || 'Type your answer...';
+  obdIsTyping = true;
+  showObdTyping();
+  setTimeout(() => {
+    removeObdTyping();
+    addObdMessage('bot', q.q, `Q ${obdStep + 1} of ${obdQuestions.length}`);
+    obdIsTyping = false;
+    if (q.chips && q.chips.length > 0) showQuickReplies(q.chips, q.isLocation);
+    else clearQuickReplies();
+    if (input) input.focus();
+  }, 700);
+}
+
+async function handleOnboardingReply(userMessage) {
+  if (!userMessage || !userMessage.trim() || obdIsTyping) return;
+  clearQuickReplies();
+  addObdMessage('user', userMessage.trim());
+  obdAnswers.push({ label: obdQuestions[obdStep]?.label || 'Info', value: userMessage.trim() });
+  obdStep++;
+  updateObdProgress(obdStep);
+  const input = document.getElementById('onboarding-input');
+  if (input) input.value = '';
+  setTimeout(() => askObdQuestion(), 300);
+}
+
+async function finishOnboarding() {
+  obdIsTyping = true;
+  showObdTyping();
+  setTimeout(async () => {
+    removeObdTyping();
+    const knowledge = obdAnswers.map(a => `${a.label}: ${a.value}`).join('\n');
+    if (state.userProfile.supabaseId) {
+      await db.from('bot_settings').upsert({
+        user_id: state.userProfile.supabaseId,
+        business_knowledge: knowledge,
+        onboarding_complete: true
+      });
+    }
+    state.businessKnowledge = knowledge;
+    updateObdProgress(obdQuestions.length);
+    addObdMessage('bot', '✅ Your bot is ready! Here\'s what your customers will experience 👇');
+    const msgs = document.getElementById('onboarding-messages');
+    if (msgs) {
+      const card = document.createElement('div');
+      card.className = 'obd-completion-card';
+      const h4 = document.createElement('h4');
+      h4.textContent = '🎉 Bot knowledge base saved';
+      card.appendChild(h4);
+      obdAnswers.forEach(a => {
+        const row = document.createElement('div');
+        row.className = 'obd-completion-row';
+        const lbl = document.createElement('div');
+        lbl.className = 'obd-completion-label'; lbl.textContent = a.label;
+        const val = document.createElement('div');
+        val.className = 'obd-completion-val'; val.textContent = a.value;
+        row.appendChild(lbl); row.appendChild(val);
+        card.appendChild(row);
+      });
+      msgs.appendChild(card);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+    setTimeout(() => {
+      addObdMessage('bot', 'Your WhatsApp bot will now use this to answer customer messages 24/7 — in Tamil, Hindi, and English. 🚀\n\nYou can edit any answer by clicking "Restart Setup" anytime.');
+      const sendBtn = document.getElementById('onboarding-send-btn');
+      const input = document.getElementById('onboarding-input');
+      if (sendBtn) sendBtn.disabled = true;
+      if (input) { input.disabled = true; input.placeholder = 'Setup complete! ✅'; }
+      obdIsTyping = false;
+    }, 500);
+  }, 1200);
+}
+
+// Bind events
 document.addEventListener('DOMContentLoaded', () => {
   const sendBtn = document.getElementById('onboarding-send-btn');
   const input = document.getElementById('onboarding-input');
   if (sendBtn && input) {
     sendBtn.onclick = () => {
+      if (!input.value.trim() || obdIsTyping) return;
       handleOnboardingReply(input.value);
-      input.value = '';
     };
-    input.onkeypress = (e) => {
-      if (e.key === 'Enter') {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!input.value.trim() || obdIsTyping) return;
         handleOnboardingReply(input.value);
-        input.value = '';
       }
-    };
+    });
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+    });
   }
-  
-  // start automatically when DOM loads if needed or user visits Bot Builder
   setTimeout(() => startOnboarding(), 1000);
 });

@@ -444,20 +444,57 @@
 
               <div class="form-block">
                 <div id="ai-onboarding-chat">
-                  <div class="onboarding-header">
-                    <h3>🤖 AI Business Setup</h3>
-                    <p>Chat with our AI to set up your bot in minutes</p>
+
+                  <!-- Header -->
+                  <div class="obd-header">
+                    <div class="obd-avatar-wrap">
+                      <div class="obd-avatar">🤖</div>
+                      <div class="obd-avatar-pulse"></div>
+                    </div>
+                    <div class="obd-header-info">
+                      <h3>Uraai Setup Assistant</h3>
+                      <p id="obd-subtitle">Setting up your WhatsApp bot</p>
+                    </div>
+                    <div class="obd-live-badge">
+                      <span class="obd-live-dot"></span> Live
+                    </div>
                   </div>
-                  <div id="onboarding-messages" class="chat-messages">
-                    <!-- Messages appear here -->
+
+                  <!-- Progress bar -->
+                  <div class="obd-progress-wrap">
+                    <div class="obd-progress-track">
+                      <div class="obd-progress-bar" id="obd-progress-bar" style="width:0%"></div>
+                    </div>
+                    <div class="obd-progress-meta">
+                      <span id="obd-progress-label">Getting started</span>
+                      <span id="obd-progress-count">0 / 6</span>
+                    </div>
                   </div>
-                  <div class="onboarding-input-row">
-                    <input id="onboarding-input" 
-                           class="field" 
-                           placeholder="Type your answer..." 
-                           type="text"/>
-                    <button id="onboarding-send-btn">Send</button>
+
+                  <!-- Messages -->
+                  <div id="onboarding-messages" class="obd-messages"></div>
+
+                  <!-- Quick replies row -->
+                  <div id="obd-quick-replies" class="obd-quick-row"></div>
+
+                  <!-- Input area -->
+                  <div class="obd-input-area">
+                    <div class="obd-input-row">
+                      <textarea id="onboarding-input"
+                        class="obd-textarea"
+                        placeholder="Type your answer..."
+                        rows="1"></textarea>
+                      <button id="onboarding-send-btn" class="obd-send-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"
+                            stroke="white" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="obd-hint">Enter to send · Shift+Enter for new line</div>
                   </div>
+
                 </div>
               </div>
 

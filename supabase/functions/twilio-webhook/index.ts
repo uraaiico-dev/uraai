@@ -162,24 +162,23 @@ serve(async (req) => {
       replyMessage = `We're currently closed. We open at ${open_time}. Please message us then!`;
     } else {
       const knowledgeBase = botSettings.business_knowledge
-        || 'No business information set up yet.';
+        || (faqData && faqData.length > 0
+          ? faqData.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n')
+          : 'No business information set up yet.');
 
-      const faqText = faqs.length > 0
-        ? "\nAdditional FAQs:\n" + faqs.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join("\n\n")
-        : "";
+      const systemPrompt = `You are a dedicated WhatsApp customer service assistant for ${business_name}.
 
-      const systemPrompt = `You are a customer service assistant for ${business_name}.
+EVERYTHING YOU KNOW ABOUT THIS BUSINESS:
+${knowledgeBase}
 
-Everything you know about this business:
-${knowledgeBase}${faqText}
-Business hours: ${open_time} to ${close_time}.
-
-RULES:
-- ONLY answer questions about ${business_name}
-- Reply in ${languages?.join(', ') || 'English'}
-- Be friendly, concise, helpful
-- If unsure, say "Please contact us directly for more details"
-- Never make up information not listed above`;
+YOUR RULES (follow strictly):
+1. ONLY answer questions about ${business_name} — nothing else
+2. Reply in ${languages?.join(', ') || 'English'} — match customer's language
+3. Be friendly, warm, and concise — like a helpful shop assistant
+4. If you don't know something, say "Please contact us directly for this"
+5. NEVER make up prices, timings, or services not mentioned above
+6. For booking/appointments, guide them to contact the business directly
+7. End replies with a helpful follow-up question when appropriate`;
 
       const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
       const geminiResponse = await fetch(
