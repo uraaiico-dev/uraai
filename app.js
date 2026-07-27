@@ -162,6 +162,10 @@ function navigateTo(screenId) {
 
   // Update nav highlights
   updateNavHighlights();
+
+  if (screenId === 'bot_builder') {
+    setTimeout(() => startOnboarding(), 300);
+  }
 }
 
 function updateNavHighlights() {
@@ -1903,11 +1907,13 @@ function addObdMessage(sender, text, tag) {
 }
 
 async function startOnboarding() {
+  const msgs = document.getElementById('onboarding-messages');
+  if (!msgs) return;
+  
   obdStep = 0;
   obdAnswers = [];
   obdQuestions = getBusinessQuestions();
-  const msgs = document.getElementById('onboarding-messages');
-  if (msgs) msgs.innerHTML = '';
+  msgs.innerHTML = '';
   clearQuickReplies();
   updateObdProgress(0);
   const bizType = state.userProfile.businessType || 'your business';
@@ -2022,5 +2028,4 @@ document.addEventListener('DOMContentLoaded', () => {
       input.style.height = Math.min(input.scrollHeight, 100) + 'px';
     });
   }
-  setTimeout(() => startOnboarding(), 1000);
 });
