@@ -163,8 +163,9 @@ function navigateTo(screenId) {
   // Update nav highlights
   updateNavHighlights();
 
+  // Start AI onboarding when Bot Builder opens
   if (screenId === 'bot_builder') {
-    setTimeout(() => startOnboarding(), 300);
+    setTimeout(() => startOnboarding(), 400);
   }
 }
 
@@ -1907,25 +1908,23 @@ function addObdMessage(sender, text, tag) {
 }
 
 async function startOnboarding() {
-  const msgs = document.getElementById('onboarding-messages');
-  if (!msgs) return;
-  
+  const container = document.getElementById('onboarding-messages');
+  if (!container) return;
   obdStep = 0;
   obdAnswers = [];
   obdQuestions = getBusinessQuestions();
-  msgs.innerHTML = '';
+  container.innerHTML = '';
   clearQuickReplies();
   updateObdProgress(0);
   const bizType = state.userProfile.businessType || 'your business';
-  const icon = (BUSINESS_QUESTION_SETS[bizType] || BUSINESS_QUESTION_SETS['default']).icon || '🏪';
   obdIsTyping = true;
   showObdTyping();
   setTimeout(() => {
     removeObdTyping();
-    addObdMessage('bot', `வணக்கம்! ${icon} I'll help set up your WhatsApp bot for ${state.userProfile.businessName || 'your business'}.\n\nI have ${obdQuestions.length} quick questions — your customers will get perfect answers after this! Let's go 🚀`);
+    addObdMessage('bot', `வணக்கம்! 🤖 I'll help set up your WhatsApp bot for ${state.userProfile.businessName || 'your business'}.\n\nI have ${obdQuestions.length} quick questions — let's go! 🚀`);
     obdIsTyping = false;
     setTimeout(() => askObdQuestion(), 600);
-  }, 800);
+  }, 700);
 }
 
 function askObdQuestion() {
