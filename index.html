@@ -194,6 +194,10 @@
           <span class="sidebar-item-icon">🤖</span>
           <span class="sidebar-item-label">Bot Builder</span>
         </a>
+        <a href="#" class="sidebar-item" data-tab="ai_setup">
+          <span class="sidebar-item-icon">✨</span>
+          <span class="sidebar-item-label">AI Setup</span>
+        </a>
         <a href="#" class="sidebar-item" data-tab="analytics">
           <span class="sidebar-item-icon">📊</span>
           <span class="sidebar-item-label">Analytics</span>
@@ -227,6 +231,10 @@
       <a href="#" class="mobile-nav-item" data-tab="bot_builder">
         <span class="mobile-nav-icon">🤖</span>
         <span class="mobile-nav-label">Bots</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-tab="ai_setup">
+        <span class="mobile-nav-icon">✨</span>
+        <span class="mobile-nav-label">AI Setup</span>
       </a>
       <a href="#" class="mobile-nav-item" data-tab="analytics">
         <span class="mobile-nav-icon">📊</span>
@@ -585,6 +593,113 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- ═══ AI SETUP SCREEN ═══ -->
+        <div class="screen" id="ai_setup">
+          <div class="app-screen-header">
+            <h2 class="app-screen-title">AI Setup</h2>
+            <p class="app-screen-subtitle">Train your bot by answering a few questions</p>
+          </div>
+          <div class="ai-setup-page">
+
+            <!-- Left: Chat -->
+            <div class="ai-setup-left">
+              <div class="ai-chat-card">
+
+                <!-- Card Header -->
+                <div class="ai-chat-header">
+                  <div class="ai-chat-header-left">
+                    <div class="ai-chat-bot-avatar">
+                      <span>🤖</span>
+                      <div class="ai-chat-bot-pulse"></div>
+                    </div>
+                    <div>
+                      <div class="ai-chat-bot-name">Uraai Setup Assistant</div>
+                      <div class="ai-chat-bot-status">
+                        <span class="ai-status-dot"></span>
+                        Active · Training your bot
+                      </div>
+                    </div>
+                  </div>
+                  <button class="ai-restart-btn" onclick="restartOnboarding()">
+                    ↺ Restart
+                  </button>
+                </div>
+
+                <!-- Progress -->
+                <div class="ai-progress-section">
+                  <div class="ai-progress-bar-track">
+                    <div class="ai-progress-bar-fill" id="ai-progress-fill"></div>
+                  </div>
+                  <div class="ai-progress-info">
+                    <span id="ai-progress-label">Getting started...</span>
+                    <span id="ai-progress-count" class="ai-progress-count">0 / 6</span>
+                  </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="ai-messages" id="ai-messages"></div>
+
+                <!-- Quick reply chips -->
+                <div class="ai-chips" id="ai-chips"></div>
+
+                <!-- Input -->
+                <div class="ai-input-section">
+                  <textarea
+                    id="ai-input"
+                    class="ai-input"
+                    placeholder="Type your answer here..."
+                    rows="1"></textarea>
+                  <button class="ai-send-btn" id="ai-send-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"
+                        stroke="white" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="ai-input-hint">Enter to send · Shift+Enter for new line</div>
+
+              </div>
+            </div>
+
+            <!-- Right: Info panel -->
+            <div class="ai-setup-right">
+
+              <div class="ai-info-card">
+                <div class="ai-info-icon">⚡</div>
+                <h3>Why do this?</h3>
+                <p>The more your bot knows about your business, the better it answers your customers — automatically, 24/7.</p>
+              </div>
+
+              <div class="ai-info-card">
+                <div class="ai-info-icon">🌐</div>
+                <h3>Languages supported</h3>
+                <div class="ai-lang-chips">
+                  <span class="ai-lang-chip">தமிழ்</span>
+                  <span class="ai-lang-chip">हिंदी</span>
+                  <span class="ai-lang-chip">English</span>
+                  <span class="ai-lang-chip">తెలుగు</span>
+                  <span class="ai-lang-chip">മലയാളം</span>
+                </div>
+                <p style="margin-top:8px;">Bot replies in your customer's language automatically.</p>
+              </div>
+
+              <div class="ai-info-card">
+                <div class="ai-info-icon">🔒</div>
+                <h3>Your data is safe</h3>
+                <p>All business information is encrypted and only used to power your bot. We never share it.</p>
+              </div>
+
+              <div class="ai-knowledge-preview" id="ai-knowledge-preview" style="display:none;">
+                <h4>✅ Knowledge saved</h4>
+                <div id="ai-knowledge-content"></div>
+              </div>
+
+            </div>
+
           </div>
         </div>
 

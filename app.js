@@ -157,23 +157,23 @@ function navigateTo(screenId) {
     if (screenId === 'analytics') title = 'Analytics';
     if (screenId === 'pricing') title = 'Billing & Plans';
     if (screenId === 'onboarding') title = 'Setup Guide';
+    if (screenId === 'ai_setup') {
+      title = 'AI Setup';
+      setTimeout(() => initAISetup(), 300);
+    }
     headerTitle.innerText = title;
   }
 
   // Update nav highlights
   updateNavHighlights();
-
-  // Start AI onboarding when Bot Builder opens
-  if (screenId === 'bot_builder') {
-    setTimeout(() => startOnboarding(), 400);
-  }
 }
 
 function updateNavHighlights() {
   const currentTab = state.activeScreen === 'dashboard' ? 'dashboard' :
                      state.activeScreen === 'bot_builder' ? 'bot_builder' :
                      state.activeScreen === 'analytics' ? 'analytics' :
-                     state.activeScreen === 'pricing' ? 'pricing' : '';
+                     state.activeScreen === 'pricing' ? 'pricing' :
+                     state.activeScreen === 'ai_setup' ? 'ai_setup' : '';
 
   // Highlight Desktop Sidebar items
   document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -1704,323 +1704,292 @@ function formatTimeAgo(timestamp) {
     return `${Math.floor(hrs / 24)} days ago`;
   }
 
-// ═══ AI ONBOARDING CHAT ═══
+// ═══ AI SETUP PAGE ═══
+let aiStep = 0;
+let aiAnswers = [];
+let aiQuestions = [];
+let aiTyping = false;
 
-// Business-specific question sets
-const BUSINESS_QUESTION_SETS = {
-  'Salon & Beauty': {
-    icon: '💇',
-    questions: [
-      { q: "What are your salon timings? 🕐", label: "Timings", placeholder: "e.g. 9am–9pm, Mon–Sat", chips: ["9am–9pm daily", "10am–8pm Mon–Sat"] },
-      { q: "What services do you offer? (hair, skin, bridal etc.) ✂️", label: "Services", placeholder: "e.g. Haircut, facial, bridal, hair color, nail art", chips: ["Haircut & styling", "Bridal packages", "Skin & facial"] },
-      { q: "What are your charges? 💰\nE.g. men's cut, women's cut, facial prices?", label: "Prices", placeholder: "Men cut ₹150, Women cut ₹350, Facial ₹500...", chips: ["Share price list", "Starting from ₹100", "Varies by service"] },
-      { q: "Do you take appointments or walk-ins? 📅", label: "Booking", placeholder: "e.g. Walk-ins welcome, or WhatsApp 9876543210 to book", chips: ["Walk-ins only", "Appointment needed", "Both welcome"] },
-      { q: "Any ongoing offers or packages? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. 10% off on Sundays, Monthly package ₹999...", chips: ["No offers now", "Weekend discount", "Membership available"] }
-    ]
-  },
-  'Clinic / Hospital': {
-    icon: '🏥',
-    questions: [
-      { q: "What are your clinic timings and days? 🕐", label: "Timings", placeholder: "e.g. Mon–Sat 9am–1pm and 5pm–9pm", chips: ["9am–9pm daily", "Morning & evening", "Emergency 24/7"] },
-      { q: "What treatments or specialties do you offer? 🩺", label: "Treatments", placeholder: "e.g. General consultation, diabetes care, orthopedic...", chips: ["General consultation", "Dental care", "Specialist clinic"] },
-      { q: "What is your consultation fee? 💊", label: "Fees", placeholder: "e.g. General ₹300, Specialist ₹500, Follow-up ₹150", chips: ["₹200–₹500 range", "Free first visit", "Varies by doctor"] },
-      { q: "How should patients book an appointment? 📞", label: "Booking", placeholder: "e.g. Call 9876543210 or walk in directly", chips: ["Walk-in only", "Call to book", "WhatsApp booking"] },
-      { q: "Any facilities available? (lab, pharmacy, X-ray etc.) 🔬\n(Type 'skip' if none)", label: "Facilities", placeholder: "e.g. In-house lab, pharmacy, ECG, ultrasound", chips: ["Basic facilities", "Full diagnostic", "Skip"] }
-    ]
-  },
-  'Gym / Fitness': {
-    icon: '💪',
-    questions: [
-      { q: "What are your gym timings? 🕐", label: "Timings", placeholder: "e.g. 5am–10pm, all days", chips: ["5am–10pm daily", "6am–9pm daily", "24/7 gym"] },
-      { q: "What facilities do you have? 🏋️", label: "Facilities", placeholder: "e.g. Cardio, weights, AC, steam room, personal trainer", chips: ["Basic gym", "Full equipped", "With trainer"] },
-      { q: "What are your membership plans? 💰", label: "Plans", placeholder: "Monthly ₹1000, Quarterly ₹2500, Annual ₹8000", chips: ["Share full plan", "Monthly plan only", "Varies"] },
-      { q: "Do you offer personal training? 🏃", label: "Training", placeholder: "e.g. PT available at ₹500/session extra", chips: ["Yes included", "Extra charge", "Not available"] },
-      { q: "Any offers for new members? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. First month free, Free trial for 3 days", chips: ["Free trial", "Joining offer", "Skip"] }
-    ]
-  },
-  'Coaching Center': {
-    icon: '📚',
-    questions: [
-      { q: "What subjects or courses do you teach? 📖", label: "Courses", placeholder: "e.g. Maths, Science, IIT coaching, NEET, Spoken English", chips: ["School subjects", "Competitive exams", "Skill courses"] },
-      { q: "What are your class timings? 🕐", label: "Timings", placeholder: "e.g. Morning 7–9am, Evening 5–8pm", chips: ["Morning batch", "Evening batch", "Both batches"] },
-      { q: "What are your fees? 💰", label: "Fees", placeholder: "e.g. ₹1500/month per subject, ₹4000 for full package", chips: ["Share fee structure", "Subject-wise fees", "Package available"] },
-      { q: "Which classes or grades do you teach? 🎓", label: "Grades", placeholder: "e.g. Class 6–12, College, All ages welcome", chips: ["Class 6–10", "Class 11–12", "All grades"] },
-      { q: "Any demo class or free trial available? 🎁\n(Type 'skip' if none)", label: "Trial", placeholder: "e.g. Free demo class on Saturdays", chips: ["Free demo yes", "No trial", "Skip"] }
-    ]
-  },
-  'Restaurant / Food': {
-    icon: '🍽️',
-    questions: [
-      { q: "What type of food do you serve? 🍛", label: "Cuisine", placeholder: "e.g. South Indian, North Indian, Chinese, Biryani", chips: ["South Indian", "Multi-cuisine", "Biryani specialist"] },
-      { q: "What are your timings? 🕐", label: "Timings", placeholder: "e.g. 8am–10pm daily, closed Tuesday", chips: ["Open all days", "Lunch & dinner", "Breakfast too"] },
-      { q: "Do you offer home delivery or takeaway? 🛵", label: "Delivery", placeholder: "e.g. Delivery via Swiggy/Zomato, self-pickup available", chips: ["Delivery available", "Takeaway only", "Dine-in + delivery"] },
-      { q: "What's your popular dish and approximate price range? 💰", label: "Prices", placeholder: "e.g. Biryani ₹120, Meals ₹80, Family pack ₹350", chips: ["Share menu price", "Budget-friendly", "Premium dining"] },
-      { q: "Any special offers or bulk orders? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. Party orders, corporate lunch, weekend specials", chips: ["Bulk order available", "No special offers", "Skip"] }
-    ]
-  },
-  'default': {
-    icon: '🏪',
-    questions: [
-      { q: "What are your business timings? 🕐", label: "Timings", placeholder: "e.g. 9am–8pm, Monday to Saturday", chips: ["9am–9pm daily", "10am–8pm Mon–Sat", "Flexible timing"] },
-      { q: "What products or services do you offer? 📦", label: "Services", placeholder: "Describe what you sell or do...", chips: [] },
-      { q: "What are your prices? 💰", label: "Prices", placeholder: "Give rough price range or starting price", chips: ["Share price list", "Varies by order", "Contact for quote"] },
-      { q: "How should customers reach you or place orders? 📞", label: "Contact", placeholder: "e.g. WhatsApp, call, walk in", chips: ["WhatsApp only", "Call us", "Walk-in welcome"] },
-      { q: "Any special offers? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "Any discount, combo or package?", chips: ["No offers", "Weekend discount", "Skip"] }
-    ]
-  }
+const AI_BUSINESS_QUESTIONS = {
+  'Salon & Beauty': [
+    { q: "What are your salon timings? 🕐", label: "Timings", placeholder: "e.g. 9am–9pm, Mon–Sat", chips: ["9am–9pm daily", "10am–8pm Mon–Sat"] },
+    { q: "What services do you offer? ✂️\n(hair, skin, bridal, nails etc.)", label: "Services", placeholder: "e.g. Haircut, facial, bridal, hair color", chips: ["Hair services", "Skin & facial", "Bridal packages"] },
+    { q: "What are your charges? 💰\nMen's cut, women's cut, facial prices?", label: "Prices", placeholder: "Men ₹150, Women ₹350, Facial ₹500...", chips: ["Starting ₹100", "Share price list", "Varies by service"] },
+    { q: "Walk-ins or appointment needed? 📅", label: "Booking", placeholder: "e.g. Walk-ins welcome, call 9876543210 to book", chips: ["Walk-ins only", "Appointment needed", "Both welcome"] },
+    { q: "Any ongoing offers or packages? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. 10% off Sunday, monthly package ₹999", chips: ["No offers", "Weekend discount", "Membership"] }
+  ],
+  'Clinic / Hospital': [
+    { q: "What are your clinic timings? 🏥", label: "Timings", placeholder: "e.g. Mon–Sat 9am–1pm, 5pm–9pm", chips: ["Morning & evening", "9am–9pm daily", "24/7 emergency"] },
+    { q: "What treatments or specialties do you offer? 🩺", label: "Treatments", placeholder: "e.g. General, diabetes, dental, orthopedic", chips: ["General medicine", "Specialist clinic", "Dental care"] },
+    { q: "What is your consultation fee? 💊", label: "Fees", placeholder: "e.g. General ₹300, Specialist ₹500", chips: ["₹200–₹500 range", "Free first visit", "Varies by doctor"] },
+    { q: "How should patients book? 📞", label: "Booking", placeholder: "e.g. Call 9876543210 or walk in", chips: ["Walk-in only", "Call to book", "WhatsApp booking"] },
+    { q: "Any facilities available? 🔬\n(lab, pharmacy, X-ray, ultrasound)", label: "Facilities", placeholder: "e.g. In-house lab, pharmacy, ECG", chips: ["Basic facilities", "Full diagnostic", "Skip"] }
+  ],
+  'Gym / Fitness': [
+    { q: "What are your gym timings? 💪", label: "Timings", placeholder: "e.g. 5am–10pm all days", chips: ["5am–10pm daily", "6am–9pm daily", "24/7 gym"] },
+    { q: "What facilities do you have? 🏋️", label: "Facilities", placeholder: "e.g. Cardio, weights, AC, trainer", chips: ["Basic gym", "Fully equipped", "With trainer"] },
+    { q: "What are your membership plans? 💰", label: "Plans", placeholder: "Monthly ₹1000, Quarterly ₹2500, Annual ₹8000", chips: ["Share full plan", "Monthly only", "Varies"] },
+    { q: "Personal training available? 🏃", label: "Training", placeholder: "e.g. PT at ₹500/session extra", chips: ["Included", "Extra charge", "Not available"] },
+    { q: "Any offers for new members? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. First month free, 3-day trial", chips: ["Free trial", "Joining offer", "Skip"] }
+  ],
+  'Coaching Center': [
+    { q: "What subjects or courses do you teach? 📚", label: "Courses", placeholder: "e.g. Maths, Science, NEET, Spoken English", chips: ["School subjects", "Competitive exams", "Skill courses"] },
+    { q: "What are your class timings? 🕐", label: "Timings", placeholder: "e.g. Morning 7–9am, Evening 5–8pm", chips: ["Morning batch", "Evening batch", "Both batches"] },
+    { q: "What are your fees? 💰", label: "Fees", placeholder: "e.g. ₹1500/month per subject", chips: ["Share fee structure", "Subject-wise", "Package available"] },
+    { q: "Which grades or levels do you teach? 🎓", label: "Grades", placeholder: "e.g. Class 6–12, College, All ages", chips: ["Class 6–10", "Class 11–12", "All grades"] },
+    { q: "Demo class or free trial? 🎁\n(Type 'skip' if none)", label: "Trial", placeholder: "e.g. Free demo on Saturdays", chips: ["Free demo yes", "No trial", "Skip"] }
+  ],
+  'Restaurant / Food': [
+    { q: "What type of food do you serve? 🍛", label: "Cuisine", placeholder: "e.g. South Indian, biryani, Chinese", chips: ["South Indian", "Multi-cuisine", "Biryani"] },
+    { q: "What are your timings? 🕐", label: "Timings", placeholder: "e.g. 8am–10pm daily", chips: ["Open all days", "Lunch & dinner", "Breakfast too"] },
+    { q: "Delivery or takeaway available? 🛵", label: "Delivery", placeholder: "e.g. Delivery via Swiggy/Zomato, pickup available", chips: ["Delivery yes", "Takeaway only", "Dine-in + delivery"] },
+    { q: "Popular dish and price range? 💰", label: "Prices", placeholder: "e.g. Biryani ₹120, Meals ₹80", chips: ["Share menu price", "Budget-friendly", "Premium dining"] },
+    { q: "Bulk orders or special offers? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. Party orders, corporate lunch", chips: ["Bulk order", "No special offers", "Skip"] }
+  ],
+  'default': [
+    { q: "What are your business timings? 🕐", label: "Timings", placeholder: "e.g. 9am–8pm, Mon–Sat", chips: ["9am–9pm daily", "10am–8pm Mon–Sat"] },
+    { q: "What do you offer? 📦", label: "Services", placeholder: "Describe your products or services...", chips: [] },
+    { q: "What are your prices? 💰", label: "Prices", placeholder: "Starting price or price range", chips: ["Share price list", "Varies by order"] },
+    { q: "How should customers contact you? 📞", label: "Contact", placeholder: "e.g. WhatsApp, call, walk in", chips: ["WhatsApp only", "Call us", "Walk-in"] },
+    { q: "Any offers? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "Any discount or package?", chips: ["No offers", "Skip"] }
+  ]
 };
 
-// Location question (always asked)
-const LOCATION_QUESTION = {
-  q: "Where is your business located? 📍\nYou can type your address OR tap the button to share your location.",
+const AI_LOCATION_Q = {
+  q: "Where is your business located? 📍\nType your address OR tap 'Share my location'",
   label: "Location",
-  placeholder: "e.g. Near bus stand, Anna Nagar, Chennai...",
-  chips: ["Share my location 📍", "Type address instead"],
+  placeholder: "e.g. Near bus stand, Anna Nagar, Chennai",
+  chips: ["📍 Share my location", "Type address"],
   isLocation: true
 };
 
-// Final open-ended question
-const FINAL_QUESTION = {
-  q: "Almost done! 🎉 Is there anything else you want your bot to know? (Special instructions, languages, anything!)\n\nType 'no' if nothing extra.",
+const AI_FINAL_Q = {
+  q: "Almost done! 🎉\nAnything else you want your bot to know?\n(special instructions, parking, ladies only, etc.)\n\nType 'no' if nothing extra.",
   label: "Extra info",
-  placeholder: "e.g. We speak Tamil and English, Parking available, Ladies only...",
-  chips: ["Nothing extra", "Tamil only", "Ladies only"]
+  placeholder: "e.g. Parking available, Ladies only, Tamil preferred...",
+  chips: ["Nothing extra", "Ladies only", "Parking available"]
 };
 
-let obdStep = 0;
-let obdAnswers = [];
-let obdQuestions = [];
-let obdIsTyping = false;
-
-function getBusinessQuestions() {
+function getAIQuestions() {
   const bizType = state.userProfile.businessType || 'default';
-  const questionSet = BUSINESS_QUESTION_SETS[bizType] || BUSINESS_QUESTION_SETS['default'];
-  return [...questionSet.questions, LOCATION_QUESTION, FINAL_QUESTION];
+  const qs = AI_BUSINESS_QUESTIONS[bizType] || AI_BUSINESS_QUESTIONS['default'];
+  return [...qs, AI_LOCATION_Q, AI_FINAL_Q];
 }
 
-function updateObdProgress(step) {
-  const total = obdQuestions.length;
-  const pct = Math.round((step / total) * 100);
-  const bar = document.getElementById('obd-progress-bar');
-  const label = document.getElementById('obd-progress-label');
-  const count = document.getElementById('obd-progress-count');
-  if (bar) bar.style.width = pct + '%';
+function aiUpdateProgress(step) {
+  const total = aiQuestions.length;
+  const pct = total > 0 ? Math.round((step / total) * 100) : 0;
+  const fill = document.getElementById('ai-progress-fill');
+  const label = document.getElementById('ai-progress-label');
+  const count = document.getElementById('ai-progress-count');
+  if (fill) fill.style.width = pct + '%';
   if (count) count.textContent = step + ' / ' + total;
-  const labels = ['Getting started', 'Timings saved ✓', 'Services saved ✓',
-    'Prices saved ✓', 'Location saved ✓', 'Offers saved ✓', 'Almost done!', 'All set! 🎉'];
+  const labels = ['Getting started...', 'Timings ✓', 'Services ✓', 'Prices ✓',
+    'Booking ✓', 'Offers ✓', 'Location ✓', 'Almost there!', 'All done! 🎉'];
   if (label) label.textContent = labels[Math.min(step, labels.length - 1)];
 }
 
-function showObdTyping() {
-  const msgs = document.getElementById('onboarding-messages');
+function aiShowTyping() {
+  const msgs = document.getElementById('ai-messages');
   if (!msgs) return;
   const wrap = document.createElement('div');
-  wrap.className = 'obd-typing-wrap'; wrap.id = 'obd-typing';
+  wrap.className = 'ai-typing-wrap'; wrap.id = 'ai-typing';
   const icon = document.createElement('div');
-  icon.className = 'obd-msg-icon'; icon.textContent = '🤖';
+  icon.className = 'ai-msg-icon'; icon.textContent = '🤖';
   const dots = document.createElement('div');
-  dots.className = 'obd-typing-dots';
+  dots.className = 'ai-typing-dots';
   for (let i = 0; i < 3; i++) { const s = document.createElement('span'); dots.appendChild(s); }
   wrap.appendChild(icon); wrap.appendChild(dots);
   msgs.appendChild(wrap);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-function removeObdTyping() {
-  const t = document.getElementById('obd-typing');
+function aiRemoveTyping() {
+  const t = document.getElementById('ai-typing');
   if (t) t.remove();
 }
 
-function clearQuickReplies() {
-  const qr = document.getElementById('obd-quick-replies');
-  if (qr) qr.innerHTML = '';
+function aiClearChips() {
+  const chips = document.getElementById('ai-chips');
+  if (chips) chips.innerHTML = '';
 }
 
-function showQuickReplies(chips, isLocation) {
-  const qr = document.getElementById('obd-quick-replies');
-  if (!qr) return;
-  qr.innerHTML = '';
-  chips.forEach(chip => {
+function aiShowChips(items, isLocation) {
+  const chips = document.getElementById('ai-chips');
+  if (!chips) return;
+  chips.innerHTML = '';
+  items.forEach(chip => {
     const btn = document.createElement('button');
-    btn.className = 'obd-qr-chip';
-    btn.textContent = chip;
+    btn.className = 'ai-chip'; btn.textContent = chip;
     btn.onclick = () => {
-      if (chip === 'Share my location 📍') {
-        requestLocationShare();
+      if (chip === '📍 Share my location') {
+        aiRequestLocation();
       } else {
-        document.getElementById('onboarding-input').value = chip;
-        handleOnboardingReply(chip);
+        const input = document.getElementById('ai-input');
+        if (input) input.value = chip;
+        aiHandleReply(chip);
       }
     };
-    qr.appendChild(btn);
+    chips.appendChild(btn);
   });
 }
 
-function requestLocationShare() {
+function aiRequestLocation() {
   if (!navigator.geolocation) {
-    handleOnboardingReply('Location sharing not supported — I will type my address');
+    aiAddMessage('bot', "Location not available on this device. Please type your address below 👇");
     return;
   }
-  addObdMessage('bot', '📍 Getting your location...');
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const lat = pos.coords.latitude.toFixed(5);
-      const lng = pos.coords.longitude.toFixed(5);
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-        const data = await res.json();
-        const address = data.display_name || `${lat}, ${lng}`;
-        const shortAddress = address.split(',').slice(0, 4).join(',').trim();
-        handleOnboardingReply(`📍 ${shortAddress}`);
-      } catch {
-        handleOnboardingReply(`📍 GPS: ${lat}, ${lng}`);
-      }
-    },
-    () => {
-      addObdMessage('bot', "Couldn't access location. Please type your address instead 👇");
+  aiAddMessage('bot', '📍 Getting your location...');
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`);
+      const data = await res.json();
+      const address = data.display_name?.split(',').slice(0,4).join(',').trim() || 'Location found';
+      aiHandleReply('📍 ' + address);
+    } catch {
+      aiHandleReply(`📍 GPS: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
     }
-  );
+  }, () => {
+    aiAddMessage('bot', "Couldn't get location. Please type your address 👇");
+  });
 }
 
-function addObdMessage(sender, text, tag) {
-  const msgs = document.getElementById('onboarding-messages');
+function aiAddMessage(sender, text, tag) {
+  const msgs = document.getElementById('ai-messages');
   if (!msgs) return;
   const wrap = document.createElement('div');
-  wrap.className = 'obd-msg obd-msg-' + sender;
+  wrap.className = 'ai-msg ai-msg-' + sender;
   if (sender === 'bot') {
     const icon = document.createElement('div');
-    icon.className = 'obd-msg-icon'; icon.textContent = '🤖';
+    icon.className = 'ai-msg-icon'; icon.textContent = '🤖';
     wrap.appendChild(icon);
   }
   const bubble = document.createElement('div');
-  bubble.className = 'obd-bubble obd-bubble-' + sender;
+  bubble.className = 'ai-bubble ai-bubble-' + sender;
   if (tag) {
     const tagEl = document.createElement('span');
-    tagEl.className = 'obd-bubble-tag'; tagEl.textContent = tag;
+    tagEl.className = 'ai-bubble-q-tag'; tagEl.textContent = tag;
     bubble.appendChild(tagEl);
   }
-  const content = document.createElement('div');
-  content.style.whiteSpace = 'pre-wrap'; content.textContent = text;
-  bubble.appendChild(content);
-  wrap.appendChild(wrap);
+  const p = document.createElement('div');
+  p.style.whiteSpace = 'pre-wrap'; p.textContent = text;
+  bubble.appendChild(p);
+  wrap.appendChild(bubble);
   msgs.appendChild(wrap);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
-async function startOnboarding() {
-  const container = document.getElementById('onboarding-messages');
-  if (!container) return;
-  obdStep = 0;
-  obdAnswers = [];
-  obdQuestions = getBusinessQuestions();
-  container.innerHTML = '';
-  clearQuickReplies();
-  updateObdProgress(0);
-  const bizType = state.userProfile.businessType || 'your business';
-  obdIsTyping = true;
-  showObdTyping();
+function initAISetup() {
+  const msgs = document.getElementById('ai-messages');
+  if (!msgs) return;
+  aiStep = 0; aiAnswers = []; aiTyping = false;
+  aiQuestions = getAIQuestions();
+  msgs.innerHTML = '';
+  aiClearChips();
+  aiUpdateProgress(0);
+  const bizType = state.userProfile.businessType || 'Business';
+  const icon = (AI_BUSINESS_QUESTIONS[bizType] || {}).icon || '🏪';
+  aiTyping = true;
+  aiShowTyping();
   setTimeout(() => {
-    removeObdTyping();
-    addObdMessage('bot', `வணக்கம்! 🤖 I'll help set up your WhatsApp bot for ${state.userProfile.businessName || 'your business'}.\n\nI have ${obdQuestions.length} quick questions — let's go! 🚀`);
-    obdIsTyping = false;
-    setTimeout(() => askObdQuestion(), 600);
-  }, 700);
+    aiRemoveTyping();
+    aiAddMessage('bot', `வணக்கம்! 🤖 I'm your Uraai setup assistant.\n\nI'll ask you ${aiQuestions.length} quick questions about ${state.userProfile.businessName || 'your business'} — then your bot will be ready to answer customers 24/7!\n\nLet's begin 🚀`);
+    aiTyping = false;
+    setTimeout(() => aiAskNext(), 700);
+  }, 900);
 }
 
-function askObdQuestion() {
-  if (obdStep >= obdQuestions.length) {
-    finishOnboarding();
-    return;
-  }
-  const q = obdQuestions[obdStep];
-  const input = document.getElementById('onboarding-input');
+function restartOnboarding() {
+  initAISetup();
+}
+
+function aiAskNext() {
+  if (aiStep >= aiQuestions.length) { aiFinish(); return; }
+  const q = aiQuestions[aiStep];
+  const input = document.getElementById('ai-input');
   if (input) input.placeholder = q.placeholder || 'Type your answer...';
-  obdIsTyping = true;
-  showObdTyping();
+  aiTyping = true;
+  aiShowTyping();
   setTimeout(() => {
-    removeObdTyping();
-    addObdMessage('bot', q.q, `Q ${obdStep + 1} of ${obdQuestions.length}`);
-    obdIsTyping = false;
-    if (q.chips && q.chips.length > 0) showQuickReplies(q.chips, q.isLocation);
-    else clearQuickReplies();
+    aiRemoveTyping();
+    aiAddMessage('bot', q.q, `Q ${aiStep + 1} of ${aiQuestions.length}`);
+    aiTyping = false;
+    if (q.chips?.length) aiShowChips(q.chips, q.isLocation);
+    else aiClearChips();
+    const input = document.getElementById('ai-input');
     if (input) input.focus();
   }, 700);
 }
 
-async function handleOnboardingReply(userMessage) {
-  if (!userMessage || !userMessage.trim() || obdIsTyping) return;
-  clearQuickReplies();
-  addObdMessage('user', userMessage.trim());
-  obdAnswers.push({ label: obdQuestions[obdStep]?.label || 'Info', value: userMessage.trim() });
-  obdStep++;
-  updateObdProgress(obdStep);
-  const input = document.getElementById('onboarding-input');
-  if (input) input.value = '';
-  setTimeout(() => askObdQuestion(), 300);
+function aiHandleReply(text) {
+  if (!text?.trim() || aiTyping) return;
+  aiClearChips();
+  aiAddMessage('user', text.trim());
+  aiAnswers.push({ label: aiQuestions[aiStep]?.label || 'Info', value: text.trim() });
+  aiStep++;
+  aiUpdateProgress(aiStep);
+  const input = document.getElementById('ai-input');
+  if (input) { input.value = ''; input.style.height = 'auto'; }
+  setTimeout(() => aiAskNext(), 300);
 }
 
-async function finishOnboarding() {
-  obdIsTyping = true;
-  showObdTyping();
-  setTimeout(async () => {
-    removeObdTyping();
-    const knowledge = obdAnswers.map(a => `${a.label}: ${a.value}`).join('\n');
-    if (state.userProfile.supabaseId) {
-      await db.from('bot_settings').upsert({
-        user_id: state.userProfile.supabaseId,
-        business_knowledge: knowledge,
-        onboarding_complete: true
-      });
-    }
-    state.businessKnowledge = knowledge;
-    updateObdProgress(obdQuestions.length);
-    addObdMessage('bot', '✅ Your bot is ready! Here\'s what your customers will experience 👇');
-    const msgs = document.getElementById('onboarding-messages');
+async function aiFinish() {
+  aiTyping = true;
+  aiShowTyping();
+  const knowledge = aiAnswers.map(a => `${a.label}: ${a.value}`).join('\n');
+  if (state.userProfile.supabaseId) {
+    await db.from('bot_settings').upsert({
+      user_id: state.userProfile.supabaseId,
+      business_knowledge: knowledge,
+      onboarding_complete: true
+    });
+  }
+  state.businessKnowledge = knowledge;
+  aiUpdateProgress(aiQuestions.length);
+  setTimeout(() => {
+    aiRemoveTyping();
+    aiAddMessage('bot', "Your bot is ready! 🎉 Here's everything it now knows:");
+    const msgs = document.getElementById('ai-messages');
     if (msgs) {
       const card = document.createElement('div');
-      card.className = 'obd-completion-card';
-      const h4 = document.createElement('h4');
-      h4.textContent = '🎉 Bot knowledge base saved';
+      card.className = 'ai-done-card';
+      const h4 = document.createElement('h4'); h4.textContent = '✅ Knowledge base saved';
       card.appendChild(h4);
-      obdAnswers.forEach(a => {
-        const row = document.createElement('div');
-        row.className = 'obd-completion-row';
-        const lbl = document.createElement('div');
-        lbl.className = 'obd-completion-label'; lbl.textContent = a.label;
-        const val = document.createElement('div');
-        val.className = 'obd-completion-val'; val.textContent = a.value;
-        row.appendChild(lbl); row.appendChild(val);
-        card.appendChild(row);
+      aiAnswers.forEach(a => {
+        const row = document.createElement('div'); row.className = 'ai-done-row';
+        const lbl = document.createElement('div'); lbl.className = 'ai-done-label'; lbl.textContent = a.label;
+        const val = document.createElement('div'); val.className = 'ai-done-val'; val.textContent = a.value;
+        row.appendChild(lbl); row.appendChild(val); card.appendChild(row);
       });
-      msgs.appendChild(card);
-      msgs.scrollTop = msgs.scrollHeight;
+      msgs.appendChild(card); msgs.scrollTop = msgs.scrollHeight;
+    }
+    const preview = document.getElementById('ai-knowledge-preview');
+    const content = document.getElementById('ai-knowledge-content');
+    if (preview && content) {
+      preview.style.display = 'block';
+      content.innerHTML = aiAnswers.map(a =>
+        `<div class="ai-knowledge-row"><span class="ai-knowledge-key">${a.label}</span><span class="ai-knowledge-val">${a.value}</span></div>`
+      ).join('');
     }
     setTimeout(() => {
-      addObdMessage('bot', 'Your WhatsApp bot will now use this to answer customer messages 24/7 — in Tamil, Hindi, and English. 🚀\n\nYou can edit any answer by clicking "Restart Setup" anytime.');
-      const sendBtn = document.getElementById('onboarding-send-btn');
-      const input = document.getElementById('onboarding-input');
-      if (sendBtn) sendBtn.disabled = true;
-      if (input) { input.disabled = true; input.placeholder = 'Setup complete! ✅'; }
-      obdIsTyping = false;
+      aiAddMessage('bot', 'Your WhatsApp bot will now use this to reply to customers in Tamil, Hindi, and English — 24/7! 🚀\n\nClick "Restart" anytime to update your info.');
+      const btn = document.getElementById('ai-send-btn');
+      const input = document.getElementById('ai-input');
+      if (btn) btn.disabled = true;
+      if (input) { input.disabled = true; input.placeholder = 'Setup complete ✅'; }
+      aiTyping = false;
     }, 500);
   }, 1200);
 }
 
-// Bind events
+// Bind events when DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-  const sendBtn = document.getElementById('onboarding-send-btn');
-  const input = document.getElementById('onboarding-input');
+  const sendBtn = document.getElementById('ai-send-btn');
+  const input = document.getElementById('ai-input');
   if (sendBtn && input) {
-    sendBtn.onclick = () => {
-      if (!input.value.trim() || obdIsTyping) return;
-      handleOnboardingReply(input.value);
-    };
+    sendBtn.onclick = () => aiHandleReply(input.value);
     input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (!input.value.trim() || obdIsTyping) return;
-        handleOnboardingReply(input.value);
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiHandleReply(input.value); }
     });
     input.addEventListener('input', () => {
       input.style.height = 'auto';
