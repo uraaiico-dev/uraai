@@ -8,10 +8,7 @@ const state = {
   openTime: "9:00 AM",
   closeTime: "8:00 PM",
   languages: ['tamil', 'english'], // tamil, english, hindi, telugu, malayalam
-  faqs: [
-    { q: "Timings?", a: "We're open Mon–Sat, 9am to 8pm." },
-    { q: "Booking an appointment?", a: "Share your date & time and we'll confirm." }
-  ],
+  
   channels: {
     whatsapp: false,
     instagram: false,
@@ -274,7 +271,6 @@ function syncUI() {
   });
 
   // Sync FAQs List
-  renderFAQsList();
 
   // Sync Live Preview Card
   renderBotLivePreview();
@@ -325,24 +321,6 @@ function syncUI() {
 
 
 
-function renderFAQsList() {
-  const container = document.getElementById('faq-replies-list');
-  if (!container) return;
-
-  container.innerHTML = '';
-  state.faqs.forEach((faq, index) => {
-    const item = document.createElement('div');
-    item.className = 'faq-item';
-    item.innerHTML = `
-      <div>
-        <div class="faq-q">${faq.q}</div>
-        <div class="faq-a">${faq.a}</div>
-      </div>
-      <div class="faq-edit" onclick="openFaqModal(${index})">Edit</div>
-    `;
-    container.appendChild(item);
-  });
-}
 
 function renderBotLivePreview() {
   const welcomeBubble = document.getElementById('preview-welcome-bubble');
@@ -377,15 +355,7 @@ function enforcePlanLimitations() {
       }
     });
 
-    const addFaqBtn = document.getElementById('add-faq-btn');
-    const faqLimit = getCurrentLimits().maxFaqTemplates;
-    if (state.faqs.length >= faqLimit) {
-      addFaqBtn.innerHTML = `🔒 Limit reached (Upgrade for more)`;
-      addFaqBtn.disabled = true;
-    } else {
-      addFaqBtn.innerHTML = `+ Add FAQ reply (${state.faqs.length}/${faqLimit === Infinity ? '∞' : faqLimit})`;
-      addFaqBtn.disabled = false;
-    }
+
   } else {
     // Pro/Max limits
     state.stats.activeBots = (state.channels.whatsapp ? 1 : 0) + (state.channels.instagram ? 1 : 0) + (state.channels.email ? 1 : 0);
@@ -395,81 +365,11 @@ function enforcePlanLimitations() {
       tag.classList.remove('disabled-feature');
     });
 
-    const addFaqBtn = document.getElementById('add-faq-btn');
-    addFaqBtn.innerHTML = `+ Add FAQ reply`;
-    addFaqBtn.disabled = false;
+
   }
 }
 
-// --- FAQ MODAL MANAGEMENT ---
-let currentEditingIndex = -1;
 
-function openFaqModal(index = -1) {
-  currentEditingIndex = index;
-  const overlay = document.getElementById('faq-modal');
-  const title = document.getElementById('modal-title-text');
-  const qField = document.getElementById('modal-q-input');
-  const aField = document.getElementById('modal-a-input');
-
-  if (index === -1) {
-    title.innerText = 'Add FAQ Auto-Reply';
-    qField.value = '';
-    aField.value = '';
-  } else {
-    title.innerText = 'Edit FAQ Auto-Reply';
-    qField.value = state.faqs[index].q;
-    aField.value = state.faqs[index].a;
-  }
-
-  overlay.classList.add('active');
-}
-
-function closeFaqModal() {
-  document.getElementById('faq-modal').classList.remove('active');
-  currentEditingIndex = -1;
-}
-
-async function saveFaqModal() {
-  const qVal = document.getElementById('modal-q-input').value.trim();
-  const aVal = document.getElementById('modal-a-input').value.trim();
-
-  if (!qVal || !aVal) {
-    alert('Please fill out both fields.');
-    return;
-  }
-
-  try {
-    if (currentEditingIndex === -1) {
-      // Add new FAQ
-      if (state.faqs.length >= getCurrentLimits().maxFaqTemplates) {
-        triggerNotification('🔒 FAQ Limit Reached', 'Upgrade to add more FAQs.');
-        closeFaqModal();
-        navigateTo('pricing');
-        return;
-      }
-      // Save to Supabase if logged in
-      if (state.userProfile.supabaseId) {
-        await addFaq(state.userProfile.supabaseId, qVal, aVal);
-      }
-      state.faqs.push({ q: qVal, a: aVal });
-      addLog('system', `FAQ saved to database: "${qVal}"`, 'success');
-    } else {
-      // Update existing FAQ
-      const existingFaq = state.faqs[currentEditingIndex];
-      if (state.userProfile.supabaseId && existingFaq.id) {
-        await updateFaq(existingFaq.id, qVal, aVal);
-      }
-      state.faqs[currentEditingIndex] = { ...existingFaq, q: qVal, a: aVal };
-      addLog('system', `FAQ updated in database: "${qVal}"`, 'success');
-    }
-  } catch (err) {
-    triggerNotification('⚠️ Save Failed', 'Could not save FAQ: ' + err.message);
-  }
-
-  closeFaqModal();
-  syncUI();
-  updateWhatsAppChips();
-}
 
 // --- PORTAL MODALS CONTROLS ---
 
@@ -563,15 +463,7 @@ function updateWhatsAppChips() {
     chipsRow.appendChild(chip);
   });
 
-  // Dynamic FAQ chips
-  state.faqs.forEach(faq => {
-    if (faq.q.toLowerCase().includes('time') || faq.q.toLowerCase().includes('book')) return;
-    const chip = document.createElement('div');
-    chip.className = 'wa-chip';
-    chip.innerText = faq.q;
-    chip.onclick = () => sendCustomerMessage(faq.q);
-    chipsRow.appendChild(chip);
-  });
+
 
   // Language check chip
   const chipLang = document.createElement('div');
@@ -668,13 +560,7 @@ function processBotEngine(text) {
     }
   }
 
-  // 2. Exact match check from user-defined FAQs
-  for (let faq of state.faqs) {
-    if (cleanText.includes(faq.q.toLowerCase().replace('?', '')) || faq.q.toLowerCase().includes(cleanText)) {
-      addLog('engine', `Rule match: FAQ template "${faq.q}"`, 'success');
-      return faq.a;
-    }
-  }
+
 
   // 3. Welcome keyword check
   const welcomeKeywords = ['hi', 'hello', 'hey', 'start', 'greet', 'வணக்கம்', 'namaste', 'hola'];
@@ -817,7 +703,6 @@ async function handleLogInSubmit() {
     // 2. Load profile from database
     const profile = await getUserProfile(userId);
     const botSettings = await getBotSettings(userId);
-    const userFaqs = await getFaqs(userId);
 
     // 3. Load into state
     state.userProfile.loggedIn = true;
@@ -839,9 +724,6 @@ async function handleLogInSubmit() {
       state.welcomeMessage = `வணக்கம்! Welcome to ${profile.business_name}.\nHow can I help you today?`;
     }
 
-    if (userFaqs.length > 0) {
-      state.faqs = userFaqs.map(f => ({ q: f.question, a: f.answer, id: f.id }));
-    }
 
     addLog('system', `Login success. Loaded profile for ${profile.full_name}`, 'success');
 
@@ -1053,7 +935,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const profile = await getUserProfile(existingUser.id);
       const botSettings = await getBotSettings(existingUser.id);
-      const userFaqs = await getFaqs(existingUser.id);
 
       state.userProfile.loggedIn = true;
       state.userProfile.supabaseId = existingUser.id;
@@ -1070,11 +951,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.languages = botSettings.languages || ['english'];
       }
 
-      if (userFaqs.length > 0) {
-        state.faqs = userFaqs.map(f => ({
-          q: f.question, a: f.answer, id: f.id
-        }));
-      }
 
       document.body.classList.add('app-logged-in');
 
@@ -1275,15 +1151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // FAQ CRUD bindings
-  const addFaqBtn = document.getElementById('add-faq-btn');
-  if (addFaqBtn) addFaqBtn.onclick = () => openFaqModal(-1);
 
-  const saveFaqBtn = document.getElementById('modal-save-btn');
-  if (saveFaqBtn) saveFaqBtn.onclick = saveFaqModal;
-
-  const cancelFaqBtn = document.getElementById('modal-cancel-btn');
-  if (cancelFaqBtn) cancelFaqBtn.onclick = closeFaqModal;
 
   // Settings Save loading simulator
   const saveChangesBtn = document.getElementById('save-changes-btn');
@@ -1938,11 +1806,20 @@ async function aiFinish() {
   aiShowTyping();
   const knowledge = aiAnswers.map(a => `${a.label}: ${a.value}`).join('\n');
   if (state.userProfile.supabaseId) {
-    await db.from('bot_settings').upsert({
+    const { error } = await db.from('bot_settings').upsert({
       user_id: state.userProfile.supabaseId,
       business_knowledge: knowledge,
-      onboarding_complete: true
+      onboarding_complete: true,
+      updated_at: new Date().toISOString()
     });
+
+    if (error) {
+      console.error('[AI SETUP] Save failed:', error);
+      addLog('system', 'AI setup save failed: ' + error.message, 'error');
+    } else {
+      console.log('[AI SETUP] Saved successfully:', knowledge);
+      addLog('system', 'AI setup complete — bot knowledge saved ✅', 'success');
+    }
   }
   state.businessKnowledge = knowledge;
   aiUpdateProgress(aiQuestions.length);

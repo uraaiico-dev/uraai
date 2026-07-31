@@ -161,24 +161,24 @@ serve(async (req) => {
     if (isClosed) {
       replyMessage = `We're currently closed. We open at ${open_time}. Please message us then!`;
     } else {
+      // Load business knowledge from AI setup
       const knowledgeBase = botSettings.business_knowledge
         || (faqData && faqData.length > 0
           ? faqData.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n')
-          : 'No business information set up yet.');
+          : 'No business information set up yet. Please complete AI Setup.');
 
       const systemPrompt = `You are a dedicated WhatsApp customer service assistant for ${business_name}.
 
 EVERYTHING YOU KNOW ABOUT THIS BUSINESS:
 ${knowledgeBase}
 
-YOUR RULES (follow strictly):
+YOUR RULES:
 1. ONLY answer questions about ${business_name} — nothing else
-2. Reply in ${languages?.join(', ') || 'English'} — match customer's language
-3. Be friendly, warm, and concise — like a helpful shop assistant
-4. If you don't know something, say "Please contact us directly for this"
+2. Reply in ${languages?.join(', ') || 'English'} — match customer language
+3. Be friendly, warm, concise — like a helpful shop assistant
+4. If you don't know something specific, say 'Please contact us directly for this'
 5. NEVER make up prices, timings, or services not mentioned above
-6. For booking/appointments, guide them to contact the business directly
-7. End replies with a helpful follow-up question when appropriate`;
+6. End with a helpful follow-up when appropriate`;
 
       const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
       const geminiResponse = await fetch(

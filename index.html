@@ -450,13 +450,7 @@
                 </div>
               </div>
 
-              <div class="form-block">
-                <label>FAQ replies</label>
-                <div id="faq-replies-list">
-                  <!-- FAQ list -->
-                </div>
-                <button class="add-faq" id="add-faq-btn">+ Add FAQ reply</button>
-              </div>
+
 
               <div class="save-bar" style="border:none; padding:0; background:transparent;">
                 <button class="save-bar-btn" id="save-changes-btn">
@@ -1025,27 +1019,7 @@
     </div>
   </div>
 
-  <!-- FAQ dialog -->
-  <div class="modal-overlay" id="faq-modal">
-    <div class="modal-card">
-      <div class="modal-title" id="modal-title-text">Edit FAQ Auto-Reply</div>
-      
-      <div class="form-block" style="margin-bottom:14px;">
-        <label style="font-size:10px; font-weight:700; color:var(--ink-60);">Customer Query Phrase</label>
-        <input type="text" class="field" id="modal-q-input" style="background:#F5F4F8;" placeholder="e.g. Price of haircut?">
-      </div>
 
-      <div class="form-block" style="margin-bottom:14px;">
-        <label style="font-size:10px; font-weight:700; color:var(--ink-60);">Automated Answer</label>
-        <textarea class="field" id="modal-a-input" style="background:#F5F4F8; resize:none;" rows="3" placeholder="e.g. Haircut starts from ₹250."></textarea>
-      </div>
-
-      <div class="modal-buttons">
-        <button class="modal-btn" id="modal-cancel-btn" style="background:var(--surface); color:var(--ink-60);">Cancel</button>
-        <button class="modal-btn" id="modal-save-btn" style="background:var(--violet); color:white;">Save FAQ</button>
-      </div>
-    </div>
-  </div>
 
   <script src="supabase.js"></script>
   <script src="app.js"></script>
