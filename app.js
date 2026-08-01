@@ -586,6 +586,17 @@ function processBotEngine(text) {
     return `Sure! Share your preferred date and time 📅\nWe're open ${timingStr}.`;
   }
 
+  // 4b. Location check
+  if (cleanText.includes('location') || cleanText.includes('where') || cleanText.includes('address')) {
+    addLog('engine', `Rule match: Dynamic Location`, 'success');
+    let locStr = `📍 We are located in ${state.userProfile?.city || 'your city'}.`;
+    if (state.businessKnowledge && state.businessKnowledge.includes('Location:')) {
+      const match = state.businessKnowledge.match(/Location:\s*([^\n]+)/);
+      if (match) locStr = `📍 You can find us at: ${match[1].trim()}`;
+    }
+    return locStr;
+  }
+
   // 5. Intelligent Fallback (Uraai Smart Core)
   addLog('engine', `No strict rule match. Initiating semantic fallback.`, 'default');
   if (state.currentPlan === 'starter') {
