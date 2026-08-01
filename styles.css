@@ -941,6 +941,16 @@ body {
 
 .form-block { margin-bottom: 14px; }
 .form-block label { font-size: 11px; font-weight: 600; color: var(--ink-60); letter-spacing: 0.3px; display: block; margin-bottom: 6px; text-transform: uppercase; }
+
+/* Menu Builder UI */
+.menu-items-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.menu-item-card { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 13px; font-weight: 500; }
+.menu-item-info { display: flex; gap: 12px; align-items: center; }
+.menu-item-name { color: white; font-weight: 600; }
+.menu-item-price { color: var(--violet); }
+.menu-item-delete { cursor: pointer; color: var(--red); font-size: 16px; opacity: 0.6; transition: 0.2s; }
+.menu-item-delete:hover { opacity: 1; }
+.menu-item-add-row { display: flex; gap: 8px; align-items: center; }
 .field {
   width: 100%;
   background: var(--card);

@@ -67,10 +67,15 @@ serve(async (req) => {
       replyMessage = `We're currently closed. We open at ${open_time}. Please message us then!`;
     } else {
       // 3. Call Gemini API
-      const knowledgeBase = botSettings.business_knowledge
+      let knowledgeBase = botSettings.business_knowledge
         || (faqData && faqData.length > 0
           ? faqData.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n')
           : 'No business information set up yet.');
+
+      if (botSettings.menu_items && botSettings.menu_items.length > 0) {
+        const menuText = botSettings.menu_items.map((m: any) => `- ${m.name}: ${m.price}`).join('\n');
+        knowledgeBase += '\n\nOUR SERVICES & PRICES:\n' + menuText;
+      }
 
       const systemPrompt = `You are a dedicated WhatsApp customer service assistant for ${business_name}.
 EVERYTHING YOU KNOW ABOUT THIS BUSINESS:

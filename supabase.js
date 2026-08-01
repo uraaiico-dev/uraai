@@ -145,7 +145,8 @@ async function saveBotSettings(userId, settings) {
       is_active: true, // ← ADD THIS
       meta_waba_id: settings.metaWabaId,
       meta_phone_id: settings.metaPhoneId,
-      meta_access_token: settings.metaAccessToken
+      meta_access_token: settings.metaAccessToken,
+      menu_items: settings.menuItems
     });
   if (error) throw error;
   return data;

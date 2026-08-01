@@ -36,15 +36,71 @@ const state = {
     businessType: "Salon & Beauty",
     city: "Chennai",
     category: "Beauty Parlour & Hair Styling",
-    waNumber: "+91 98450 12345",
+    waNumber: "",
     igHandle: "",
     busEmail: "",
-    logoFile: null,
+    supabaseId: null,
+    teamRole: 'admin',
     metaWabaId: "",
     metaPhoneId: "",
     metaAccessToken: ""
   }
 };
+
+let menuItemsData = [];
+
+function renderMenuItems() {
+  const list = document.getElementById('menu-items-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (menuItemsData.length === 0) {
+    list.innerHTML = `<div style="color:var(--ink-40); font-size:12px; font-style:italic;">No services added yet.</div>`;
+    return;
+  }
+  menuItemsData.forEach((item, index) => {
+    const el = document.createElement('div');
+    el.className = 'menu-item-card';
+    el.innerHTML = `
+      <div class="menu-item-info">
+        <span class="menu-item-name">${item.name}</span>
+        <span class="menu-item-price">${item.price}</span>
+      </div>
+      <div class="menu-item-delete" data-index="${index}">🗑️</div>
+    `;
+    list.appendChild(el);
+  });
+  
+  // Attach delete events
+  list.querySelectorAll('.menu-item-delete').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.getAttribute('data-index'));
+      menuItemsData.splice(idx, 1);
+      renderMenuItems();
+    };
+  });
+}
+
+function attachMenuBuilderEvents() {
+  const addBtn = document.getElementById('btn-add-menu-item');
+  const nameInp = document.getElementById('new-menu-item-name');
+  const priceInp = document.getElementById('new-menu-item-price');
+  if (addBtn && nameInp && priceInp) {
+    addBtn.onclick = () => {
+      const name = nameInp.value.trim();
+      const price = priceInp.value.trim();
+      if (!name || !price) {
+        triggerNotification('Error', 'Please enter both name and price.');
+        return;
+      }
+      menuItemsData.push({ name, price });
+      nameInp.value = '';
+      priceInp.value = '';
+      renderMenuItems();
+    };
+  }
+}
+
+// Ensure attachMenuBuilderEvents is called when DOM loads
 
 // --- PLAN LIMITS CONFIG (single source of truth) ---
 const PLAN_LIMITS = {
@@ -808,9 +864,13 @@ async function handleLogInSubmit() {
       state.closeTime = botSettings.close_time;
       state.languages = botSettings.languages || ['english'];
       state.businessKnowledge = botSettings.business_knowledge || '';
-      state.userProfile.metaWabaId = botSettings.meta_waba_id || '';
-      state.userProfile.metaPhoneId = botSettings.meta_phone_id || '';
-      state.userProfile.metaAccessToken = botSettings.meta_access_token || '';
+      menuItemsData = botSettings.menu_items || [];
+      renderMenuItems();
+    }
+    
+    state.userProfile.metaWabaId = botSettings.meta_waba_id || '';
+    state.userProfile.metaPhoneId = botSettings.meta_phone_id || '';
+    state.userProfile.metaAccessToken = botSettings.meta_access_token || '';
     }
 
     if (!botSettings || !botSettings.welcome_message) {
@@ -1062,6 +1122,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.closeTime = botSettings.close_time;
         state.languages = botSettings.languages || ['english'];
         state.businessKnowledge = botSettings.business_knowledge || '';
+        menuItemsData = botSettings.menu_items || [];
+        renderMenuItems();
       }
 
 
@@ -1116,6 +1178,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
   });
+
+  attachMenuBuilderEvents();
+  renderMenuItems();
 
   // Main Page Action CTAs
   const heroBtnStart = document.getElementById('hero-btn-start');
@@ -1297,7 +1362,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           busEmail: state.userProfile.busEmail,
           metaWabaId: document.getElementById('meta-waba-id').value.trim(),
           metaPhoneId: document.getElementById('meta-phone-id').value.trim(),
-          metaAccessToken: document.getElementById('meta-access-token').value.trim()
+          metaAccessToken: document.getElementById('meta-access-token').value.trim(),
+          menuItems: menuItemsData
         });
 
         // update local state
