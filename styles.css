@@ -944,9 +944,9 @@ body {
 
 /* Menu Builder UI */
 .menu-items-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.menu-item-card { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; font-size: 13px; font-weight: 500; }
+.menu-item-card { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--ink-5); border: 1px solid var(--ink-10); border-radius: 10px; font-size: 13px; font-weight: 500; }
 .menu-item-info { display: flex; gap: 12px; align-items: center; }
-.menu-item-name { color: white; font-weight: 600; }
+.menu-item-name { color: var(--ink-100); font-weight: 600; }
 .menu-item-price { color: var(--violet); }
 .menu-item-delete { cursor: pointer; color: var(--red); font-size: 16px; opacity: 0.6; transition: 0.2s; }
 .menu-item-delete:hover { opacity: 1; }
