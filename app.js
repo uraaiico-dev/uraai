@@ -1960,29 +1960,33 @@ async function initCRM() {
       `).join('');
     }
 
+    // Bind export button right away
     const btnExport = document.getElementById('btn-export-leads');
     if (btnExport) {
-      btnExport.onclick = () => {
-        if (!leads || leads.length === 0) {
-          alert('No leads to export.');
-          return;
+      btnExport.onclick = async () => {
+        try {
+          const exportLeads = await getLeadsCRM(state.userProfile.supabaseId);
+          if (!exportLeads || exportLeads.length === 0) {
+            alert('No leads to export.');
+            return;
+          }
+          
+          let csv = 'Phone,Channel,Status,Date\n';
+          exportLeads.forEach(l => {
+            csv += `"${l.phone}","${l.channel}","${l.lead_score || 'New'}","${new Date(l.created_at).toLocaleDateString()}"\n`;
+          });
+          
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.setAttribute('href', url);
+          a.setAttribute('download', 'uraai_leads.csv');
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch(err) {
+          alert('Export failed: ' + err.message);
         }
-        
-        // Build CSV string
-        let csv = 'Phone,Channel,Status,Date\n';
-        leads.forEach(l => {
-          csv += `"${l.phone}","${l.channel}","${l.lead_score || 'New'}","${new Date(l.created_at).toLocaleDateString()}"\n`;
-        });
-        
-        // Trigger download
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', 'uraai_leads.csv');
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
       };
     }
   } catch (e) {
