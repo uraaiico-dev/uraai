@@ -1788,10 +1788,24 @@ const AI_BOOKING_REQS_Q = {
   chips: ["Name, Phone, Service, Time", "Name & Phone only", "Add Preferred Staff"]
 };
 
+const AI_PAYMENT_METHODS_Q = {
+  q: "What payment methods do you accept? 💳",
+  label: "Payment",
+  placeholder: "e.g. Cash, UPI, Cards, Bank Transfer",
+  chips: ["Cash & UPI only", "All cards & UPI", "Cash only"]
+};
+
+const AI_TONE_Q = {
+  q: "How should the bot sound when talking to customers? 🎭",
+  label: "Tone",
+  placeholder: "e.g. Friendly and use emojis, strictly professional",
+  chips: ["Friendly with emojis 😊", "Strictly Professional", "Casual & Short"]
+};
+
 function getAIQuestions() {
   const bizType = state.userProfile.businessType || 'default';
   const qs = AI_BUSINESS_QUESTIONS[bizType] || AI_BUSINESS_QUESTIONS['default'];
-  return [...qs, AI_BOOKING_REQS_Q, AI_LOCATION_Q, AI_FINAL_Q];
+  return [...qs, AI_BOOKING_REQS_Q, AI_PAYMENT_METHODS_Q, AI_LOCATION_Q, AI_TONE_Q, AI_FINAL_Q];
 }
 
 function aiUpdateProgress(step) {
@@ -1803,7 +1817,7 @@ function aiUpdateProgress(step) {
   if (fill) fill.style.width = pct + '%';
   if (count) count.textContent = step + ' / ' + total;
   const labels = ['Getting started...', 'Timings ✓', 'Services ✓', 'Prices ✓',
-    'Booking ✓', 'Offers ✓', 'Details ✓', 'Location ✓', 'Almost there!', 'All done! 🎉'];
+    'Booking ✓', 'Offers ✓', 'Details ✓', 'Payment ✓', 'Location ✓', 'Tone ✓', 'Almost there!', 'All done! 🎉'];
   if (label) label.textContent = labels[Math.min(step, labels.length - 1)];
 }
 
