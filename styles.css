@@ -2457,20 +2457,23 @@ body.app-logged-in .bg-glow-3 {
 .app-screens-container::-webkit-scrollbar,
 .builder-left-settings::-webkit-scrollbar,
 .wa-chat-area::-webkit-scrollbar,
-.console-body::-webkit-scrollbar {
+.console-body::-webkit-scrollbar,
+.sidebar-menu::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 .app-screens-container::-webkit-scrollbar-track,
 .builder-left-settings::-webkit-scrollbar-track,
 .wa-chat-area::-webkit-scrollbar-track,
-.console-body::-webkit-scrollbar-track {
+.console-body::-webkit-scrollbar-track,
+.sidebar-menu::-webkit-scrollbar-track {
   background: transparent;
 }
 .app-screens-container::-webkit-scrollbar-thumb,
 .builder-left-settings::-webkit-scrollbar-thumb,
 .wa-chat-area::-webkit-scrollbar-thumb,
-.console-body::-webkit-scrollbar-thumb {
+.console-body::-webkit-scrollbar-thumb,
+.sidebar-menu::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
 }
