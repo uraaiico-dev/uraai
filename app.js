@@ -156,7 +156,9 @@ function navigateTo(screenId) {
     if (screenId === 'onboarding') title = 'Setup Guide';
     if (screenId === 'ai_setup') {
       title = 'AI Setup';
-      setTimeout(() => initAISetup(), 300);
+      if (!state.businessKnowledge) {
+        setTimeout(() => initAISetup(), 300);
+      }
     }
     headerTitle.innerText = title;
   }
@@ -574,7 +576,14 @@ function processBotEngine(text) {
   // 4. Appointment reservation check
   if (cleanText.includes('book') || cleanText.includes('appointment') || cleanText.includes('reserve') || cleanText.includes('schedule') || cleanText.includes('timing')) {
     addLog('engine', `Rule match: Dynamic Bookings Reservation`, 'success');
-    return `Sure! Share your preferred date and time 📅\nWe're open Mon–Sat, ${state.openTime}–${state.closeTime}.`;
+    
+    let timingStr = `Mon–Sat, ${state.openTime || '9 AM'}–${state.closeTime || '8 PM'}`;
+    if (state.businessKnowledge && state.businessKnowledge.includes('Timings:')) {
+      const match = state.businessKnowledge.match(/Timings:\s*([^\n]+)/);
+      if (match) timingStr = match[1].trim();
+    }
+    
+    return `Sure! Share your preferred date and time 📅\nWe're open ${timingStr}.`;
   }
 
   // 5. Intelligent Fallback (Uraai Smart Core)
@@ -718,6 +727,7 @@ async function handleLogInSubmit() {
       state.openTime = botSettings.open_time;
       state.closeTime = botSettings.close_time;
       state.languages = botSettings.languages || ['english'];
+      state.businessKnowledge = botSettings.business_knowledge || '';
     }
 
     if (!botSettings || !botSettings.welcome_message) {
@@ -949,6 +959,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.openTime = botSettings.open_time;
         state.closeTime = botSettings.close_time;
         state.languages = botSettings.languages || ['english'];
+        state.businessKnowledge = botSettings.business_knowledge || '';
       }
 
 
