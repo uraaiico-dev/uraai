@@ -92,6 +92,39 @@ async function updateUserPlan(userId, newPlan) {
   return data;
 }
 
+// Update business profile
+async function updateBusinessProfile(userId, updates) {
+  if (!db) return null;
+  const { error } = await db
+    .from('users')
+    .update(updates)
+    .eq('id', userId);
+  if (error) throw error;
+  return true;
+}
+
+// ─── TEAM MEMBERS FUNCTIONS ───
+
+async function inviteTeamMember(ownerId, memberEmail, role) {
+  if (!db) return null;
+  const { error } = await db
+    .from('team_members')
+    .insert({ owner_id: ownerId, member_email: memberEmail, role: role });
+  if (error) throw error;
+  return true;
+}
+
+async function getTeamMembers(ownerId) {
+  if (!db) return [];
+  const { data, error } = await db
+    .from('team_members')
+    .select('*')
+    .eq('owner_id', ownerId)
+    .order('invited_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
 // ─── BOT SETTINGS FUNCTIONS ───
 
 // Save bot settings

@@ -470,9 +470,14 @@
 
         <!-- CRM & Bookings Screen -->
         <div class="screen" id="crm">
-          <div class="app-screen-header">
-            <h3>CRM & Bookings</h3>
-            <p>Manage your captured leads and upcoming appointments.</p>
+          <div class="app-screen-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3>CRM & Bookings</h3>
+              <p>Manage your captured leads and upcoming appointments.</p>
+            </div>
+            <button class="btn-primary" id="btn-export-leads" style="padding:8px 16px; font-size:14px; display:flex; align-items:center; gap:6px;">
+              <span>⬇️ Export to CSV</span>
+            </button>
           </div>
           <div class="crm-layout">
             <div class="crm-card">

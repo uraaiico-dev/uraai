@@ -243,6 +243,19 @@ function syncUI() {
     }
   }
 
+  // RBAC for Staff Members
+  const restrictedTabs = ['bot_builder', 'ai_setup', 'pricing'];
+  document.querySelectorAll('.sidebar-item, .mobile-nav-item').forEach(el => {
+    const tabId = el.getAttribute('data-tab');
+    if (restrictedTabs.includes(tabId)) {
+      if (state.userProfile.teamRole === 'staff') {
+        el.style.display = 'none';
+      } else {
+        el.style.display = 'flex';
+      }
+    }
+  });
+
   // 1. Dashboard Info
   const initial = state.userProfile.fullName.charAt(0).toUpperCase();
   document.getElementById('dash-user-name').innerText = `${state.userProfile.fullName} 👋`;
@@ -1945,6 +1958,32 @@ async function initCRM() {
           <td>${new Date(l.created_at).toLocaleDateString()}</td>
         </tr>
       `).join('');
+    }
+
+    const btnExport = document.getElementById('btn-export-leads');
+    if (btnExport) {
+      btnExport.onclick = () => {
+        if (!leads || leads.length === 0) {
+          alert('No leads to export.');
+          return;
+        }
+        
+        // Build CSV string
+        let csv = 'Phone,Channel,Status,Date\n';
+        leads.forEach(l => {
+          csv += `"${l.phone}","${l.channel}","${l.lead_score || 'New'}","${new Date(l.created_at).toLocaleDateString()}"\n`;
+        });
+        
+        // Trigger download
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'uraai_leads.csv');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
     }
   } catch (e) {
     console.error("CRM load error", e);
