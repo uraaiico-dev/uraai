@@ -475,10 +475,10 @@
             <p>Manage your captured leads and upcoming appointments.</p>
           </div>
           <div class="crm-layout">
-            <div class="card" style="margin-bottom: 24px;">
-              <div class="card-header"><h4 class="card-title">Appointments</h4></div>
-              <div class="card-body" style="padding:0; overflow-x:auto;">
-                <table class="leads-table">
+            <div class="crm-card">
+              <h4 style="margin-bottom:16px; color:var(--ink-90);">Upcoming Appointments</h4>
+              <div style="overflow-x:auto;">
+                <table>
                   <thead><tr><th>Date & Time</th><th>Customer Phone</th><th>Service</th><th>Status</th></tr></thead>
                   <tbody id="crm-appointments-list">
                     <tr><td colspan="4" style="text-align:center; padding:24px; color:#888;">Loading...</td></tr>
@@ -486,10 +486,10 @@
                 </table>
               </div>
             </div>
-            <div class="card">
-              <div class="card-header"><h4 class="card-title">All Leads</h4></div>
-              <div class="card-body" style="padding:0; overflow-x:auto;">
-                <table class="leads-table">
+            <div class="crm-card">
+              <h4 style="margin-bottom:16px; color:var(--ink-90);">All Leads Captured</h4>
+              <div style="overflow-x:auto;">
+                <table>
                   <thead><tr><th>Phone</th><th>Channel</th><th>Lead Score</th><th>Date Captured</th></tr></thead>
                   <tbody id="crm-leads-list">
                     <tr><td colspan="4" style="text-align:center; padding:24px; color:#888;">Loading...</td></tr>
@@ -506,19 +506,19 @@
             <h3>Mass Broadcasts</h3>
             <p>Send promotional messages to your CRM leads.</p>
           </div>
-          <div class="broadcast-layout card" style="padding:24px; max-width:600px;">
-            <div class="field-group">
-              <label>Select Recipients (Leads)</label>
-              <select id="broadcast-recipients" class="field" multiple style="height:100px;">
+          <div class="crm-card" style="max-width:600px; margin: 0 auto;">
+            <div class="field-group" style="margin-bottom:20px;">
+              <label style="font-weight:600; color:var(--ink-70);">Select Recipients (Leads)</label>
+              <select id="broadcast-recipients" class="field" multiple style="height:120px; border-radius:12px; background:rgba(241,245,249,0.5);">
                 <!-- Populated dynamically -->
               </select>
             </div>
-            <div class="field-group">
-              <label>Promotional Message</label>
-              <textarea id="broadcast-message" class="field" style="height:120px;" placeholder="Hey there! Get 20% off this weekend..."></textarea>
+            <div class="field-group" style="margin-bottom:24px;">
+              <label style="font-weight:600; color:var(--ink-70);">Promotional Message</label>
+              <textarea id="broadcast-message" class="field" style="height:140px; border-radius:12px; background:rgba(241,245,249,0.5); padding:16px;" placeholder="Hey there! Get 20% off this weekend..."></textarea>
             </div>
-            <button class="btn-primary" id="btn-send-broadcast" style="width:100%;">Blast Message 🚀</button>
-            <p id="broadcast-status" style="margin-top:12px; font-size:14px; text-align:center;"></p>
+            <button class="btn-primary" id="btn-send-broadcast" style="width:100%; height:54px; border-radius:27px; font-size:16px; background:linear-gradient(135deg, var(--primary), #a855f7); box-shadow:0 8px 24px rgba(99,102,241,0.4);">Blast Message 🚀</button>
+            <p id="broadcast-status" style="margin-top:16px; font-size:14px; text-align:center; font-weight:500;"></p>
           </div>
         </div>
 
