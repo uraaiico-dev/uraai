@@ -154,7 +154,10 @@ function navigateTo(screenId) {
   if (headerTitle) {
     let title = 'Dashboard';
     if (screenId === 'bot_builder') title = 'Bot Builder';
-    if (screenId === 'analytics') title = 'Analytics';
+    if (screenId === 'analytics') {
+      title = 'Analytics';
+      setTimeout(() => initAnalytics(), 100);
+    }
     if (screenId === 'pricing') title = 'Billing & Plans';
     if (screenId === 'onboarding') title = 'Setup Guide';
     if (screenId === 'ai_setup') {
@@ -187,11 +190,7 @@ function navigateTo(screenId) {
 }
 
 function updateNavHighlights() {
-  const currentTab = state.activeScreen === 'dashboard' ? 'dashboard' :
-                     state.activeScreen === 'bot_builder' ? 'bot_builder' :
-                     state.activeScreen === 'analytics' ? 'analytics' :
-                     state.activeScreen === 'pricing' ? 'pricing' :
-                     state.activeScreen === 'ai_setup' ? 'ai_setup' : '';
+  const currentTab = state.activeScreen;
 
   // Highlight Desktop Sidebar items
   document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -2036,6 +2035,82 @@ document.getElementById('btn-send-broadcast')?.addEventListener('click', async (
   btn.disabled = false;
   btn.innerText = 'Blast Message 🚀';
 });
+
+// ─── ANALYTICS UI ───
+let analyticsChartInstance = null;
+async function initAnalytics() {
+  try {
+    const data = await getAnalyticsData(state.userProfile.supabaseId);
+    
+    // Update KPIs
+    document.getElementById('kpi-total-replies').innerText = data.logs.length;
+    document.getElementById('kpi-leads-saved').innerText = data.leadsCount;
+    
+    // Process logs for the last 7 days
+    const today = new Date();
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const labels = [];
+    const inboundData = [];
+    const outboundData = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      labels.push(days[d.getDay()]);
+      
+      const startOfDay = new Date(d.setHours(0,0,0,0)).getTime();
+      const endOfDay = new Date(d.setHours(23,59,59,999)).getTime();
+      
+      const dayLogs = data.logs.filter(l => {
+        const t = new Date(l.created_at).getTime();
+        return t >= startOfDay && t <= endOfDay;
+      });
+      
+      inboundData.push(dayLogs.filter(l => l.direction === 'inbound').length);
+      outboundData.push(dayLogs.filter(l => l.direction === 'outbound').length);
+    }
+    
+    const ctx = document.getElementById('analyticsChart').getContext('2d');
+    if (analyticsChartInstance) {
+      analyticsChartInstance.destroy();
+    }
+    
+    analyticsChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Inbound (Customer)',
+            data: inboundData,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 4
+          },
+          {
+            label: 'Outbound (Bot)',
+            data: outboundData,
+            backgroundColor: '#8b5cf6', // var(--violet)
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true, grid: { display: false, drawBorder: false }, ticks: { color: 'rgba(255,255,255,0.5)' } },
+          y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: 'rgba(255,255,255,0.5)' } }
+        },
+        plugins: {
+          legend: { labels: { color: 'rgba(255,255,255,0.7)' } }
+        }
+      }
+    });
+    
+  } catch (err) {
+    console.error("Failed to load analytics", err);
+  }
+}
 
 // ─── TEAM MEMBERS UI ───
 async function renderTeamMembers() {

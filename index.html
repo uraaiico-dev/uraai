@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Meta / Facebook SDK for Embedded Signup -->
   <script>
     window.fbAsyncInit = function() {
@@ -853,19 +854,19 @@
 
             <div class="kpi-strip">
               <div class="kpi">
-                <div class="kpi-val">8.4k</div>
+                <div class="kpi-val" id="kpi-total-replies">--</div>
                 <div class="kpi-label">Total replies</div>
-                <div class="kpi-delta up">↑ 23%</div>
+                <div class="kpi-delta up">This Week</div>
               </div>
               <div class="kpi">
-                <div class="kpi-val">218</div>
+                <div class="kpi-val" id="kpi-leads-saved">--</div>
                 <div class="kpi-label">Leads saved</div>
-                <div class="kpi-delta up">↑ 11%</div>
+                <div class="kpi-delta up">All Time</div>
               </div>
               <div class="kpi">
-                <div class="kpi-val">1.9s</div>
+                <div class="kpi-val">1.2s</div>
                 <div class="kpi-label">Avg reply speed</div>
-                <div class="kpi-delta up">↑ Faster</div>
+                <div class="kpi-delta up">Gemini Flash</div>
               </div>
             </div>
 
@@ -875,14 +876,8 @@
                   <h4>Daily reply volume</h4>
                   <span>This week</span>
                 </div>
-                <div class="bar-group">
-                  <div class="bw"><div class="b" style="height:42px"></div><div class="bl">Mon</div></div>
-                  <div class="bw"><div class="b med" style="height:58px"></div><div class="bl">Tue</div></div>
-                  <div class="bw"><div class="b" style="height:36px"></div><div class="bl">Wed</div></div>
-                  <div class="bw"><div class="b hi" style="height:78px"></div><div class="bl">Thu</div></div>
-                  <div class="bw"><div class="b med" style="height:64px"></div><div class="bl">Fri</div></div>
-                  <div class="bw"><div class="b" style="height:50px"></div><div class="bl">Sat</div></div>
-                  <div class="bw"><div class="b" style="height:28px"></div><div class="bl">Sun</div></div>
+                <div class="bar-group" style="position:relative; height:180px; width:100%; display:block; padding:0;">
+                  <canvas id="analyticsChart"></canvas>
                 </div>
               </div>
 

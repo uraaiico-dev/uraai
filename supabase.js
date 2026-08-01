@@ -408,3 +408,31 @@ async function upgradeUserPlan(userId, newPlan) {
   if (error) throw error;
   return data;
 }
+
+// ─── ANALYTICS FUNCTIONS ───
+
+async function getAnalyticsData(userId) {
+  if (!db) return { logs: [], leadsCount: 0 };
+  
+  // Get logs from last 7 days
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const { data: logs, error: logsError } = await db
+    .from('whatsapp_logs')
+    .select('direction, created_at')
+    .eq('user_id', userId)
+    .gte('created_at', sevenDaysAgo.toISOString());
+    
+  if (logsError) throw logsError;
+  
+  // Get total leads
+  const { count, error: leadsError } = await db
+    .from('leads')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+    
+  if (leadsError) throw leadsError;
+  
+  return { logs: logs || [], leadsCount: count || 0 };
+}
