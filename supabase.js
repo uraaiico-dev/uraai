@@ -109,7 +109,10 @@ async function saveBotSettings(userId, settings) {
       wa_phone_number: settings.waNumber, // ← ADD THIS for routing
       instagram_handle: settings.igHandle,
       business_email: settings.busEmail,
-      is_active: true // ← ADD THIS
+      is_active: true, // ← ADD THIS
+      meta_waba_id: settings.metaWabaId,
+      meta_phone_id: settings.metaPhoneId,
+      meta_access_token: settings.metaAccessToken
     });
   if (error) throw error;
   return data;
@@ -260,6 +263,107 @@ async function removeTeamMember(inviteId) {
     .from('team_members')
     .delete()
     .eq('id', inviteId);
+  if (error) throw error;
+  return data;
+}
+
+// ─── INBOX FUNCTIONS ───
+
+async function getInboxContacts(userId) {
+  if (!db) return [];
+  // Get unique numbers from whatsapp_logs
+  const { data, error } = await db
+    .from('whatsapp_logs')
+    .select('from_number, to_number, created_at, message_body')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+    
+  if (error) throw error;
+  
+  // Group by unique contact
+  const contactsMap = new Map();
+  for (const log of data || []) {
+    // If we sent it, to_number is the contact. If received, from_number is the contact.
+    // For simplicity, we just look at from_number for inbound, to_number for outbound.
+    // Wait, the webhook saves: inbound -> from_number = customer. outbound -> to_number = customer.
+    // So the customer number is always the one that isn't the bot's number.
+    // Actually, webhook saves outbound with to_number = customer. Inbound with from_number = customer.
+    // It's easier if we just fetch leads to get customer names, then join logs. 
+    // But let's do a simple grouping.
+    const isOutbound = log.direction === 'outbound';
+    const contactNumber = isOutbound ? log.to_number : log.from_number;
+    
+    if (!contactsMap.has(contactNumber)) {
+      contactsMap.set(contactNumber, {
+        phone: contactNumber,
+        lastMessage: log.message_body || log.ai_reply || 'Media message',
+        lastTime: log.created_at
+      });
+    }
+  }
+  return Array.from(contactsMap.values());
+}
+// ─── BROADCAST FUNCTIONS ───
+
+async function sendBroadcastMessage(userId, recipients, message) {
+  const { data, error } = await db.functions.invoke('twilio-broadcast', {
+    body: { recipients, message, userId }
+  });
+  if (error) throw error;
+  return data;
+}
+async function getChatHistory(userId, contactPhone) {
+  if (!db) return [];
+  const { data, error } = await db
+    .from('whatsapp_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .or(`from_number.eq.${contactPhone},to_number.eq.${contactPhone}`)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function sendWhatsAppMessage(userId, toPhone, message) {
+  const { data, error } = await db.functions.invoke('twilio-send', {
+    body: { to: toPhone, message: message, userId: userId }
+  });
+  if (error) throw error;
+  return data;
+}
+
+// ─── CRM FUNCTIONS ───
+
+async function getAppointments(userId) {
+  if (!db) return [];
+  const { data, error } = await db
+    .from('appointments')
+    .select('*')
+    .eq('user_id', userId)
+    .order('appointment_date', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function getLeadsCRM(userId) {
+  if (!db) return [];
+  const { data, error } = await db
+    .from('leads')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+// ─── BILLING FUNCTIONS ───
+
+async function upgradeUserPlan(userId, newPlan) {
+  if (!db) throw new Error("Supabase is not configured.");
+  const { data, error } = await db
+    .from('users')
+    .update({ plan: newPlan })
+    .eq('id', userId);
   if (error) throw error;
   return data;
 }

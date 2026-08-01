@@ -190,6 +190,18 @@
           <span class="sidebar-item-icon">⊞</span>
           <span class="sidebar-item-label">Dashboard</span>
         </a>
+        <a href="#" class="sidebar-item" data-tab="inbox">
+          <span class="sidebar-item-icon">💬</span>
+          <span class="sidebar-item-label">Live Inbox</span>
+        </a>
+        <a href="#" class="sidebar-item" data-tab="crm">
+          <span class="sidebar-item-icon">📅</span>
+          <span class="sidebar-item-label">CRM & Bookings</span>
+        </a>
+        <a href="#" class="sidebar-item" data-tab="broadcasts">
+          <span class="sidebar-item-icon">📢</span>
+          <span class="sidebar-item-label">Broadcasts</span>
+        </a>
         <a href="#" class="sidebar-item" data-tab="bot_builder">
           <span class="sidebar-item-icon">🤖</span>
           <span class="sidebar-item-label">Bot Builder</span>
@@ -231,6 +243,14 @@
       <a href="#" class="mobile-nav-item active" data-tab="dashboard">
         <span class="mobile-nav-icon">⊞</span>
         <span class="mobile-nav-label">Home</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-tab="inbox">
+        <span class="mobile-nav-icon">💬</span>
+        <span class="mobile-nav-label">Inbox</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-tab="crm">
+        <span class="mobile-nav-icon">📅</span>
+        <span class="mobile-nav-label">CRM</span>
       </a>
       <a href="#" class="mobile-nav-item" data-tab="bot_builder">
         <span class="mobile-nav-icon">🤖</span>
@@ -419,6 +439,88 @@
             </div>
           </div>
         </div>
+        <!-- Live Chat Inbox Screen -->
+        <div class="screen" id="inbox">
+          <div class="app-screen-header">
+            <h3>Live Inbox</h3>
+            <p>Monitor conversations and reply directly to customers.</p>
+          </div>
+          <div class="inbox-layout">
+            <div class="inbox-sidebar" id="inbox-contact-list">
+              <!-- Contacts will be populated here -->
+              <p style="padding:16px; color:var(--ink-40); font-size:14px;">Loading chats...</p>
+            </div>
+            <div class="inbox-main" id="inbox-chat-area" style="display:none;">
+              <div class="inbox-chat-header" id="inbox-active-contact">
+                <h4>Customer</h4>
+              </div>
+              <div class="inbox-chat-history" id="inbox-history">
+                <!-- Chat history -->
+              </div>
+              <div class="inbox-reply-box">
+                <input type="text" id="inbox-reply-input" placeholder="Type your message..." />
+                <button class="btn-primary" id="btn-inbox-send">Send</button>
+              </div>
+            </div>
+            <div class="inbox-empty-state" id="inbox-empty" style="display:flex; flex:1; align-items:center; justify-content:center; color:var(--ink-40);">
+              Select a conversation to start messaging
+            </div>
+          </div>
+        </div>
+
+        <!-- CRM & Bookings Screen -->
+        <div class="screen" id="crm">
+          <div class="app-screen-header">
+            <h3>CRM & Bookings</h3>
+            <p>Manage your captured leads and upcoming appointments.</p>
+          </div>
+          <div class="crm-layout">
+            <div class="card" style="margin-bottom: 24px;">
+              <div class="card-header"><h4 class="card-title">Appointments</h4></div>
+              <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="leads-table">
+                  <thead><tr><th>Date & Time</th><th>Customer Phone</th><th>Service</th><th>Status</th></tr></thead>
+                  <tbody id="crm-appointments-list">
+                    <tr><td colspan="4" style="text-align:center; padding:24px; color:#888;">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h4 class="card-title">All Leads</h4></div>
+              <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="leads-table">
+                  <thead><tr><th>Phone</th><th>Channel</th><th>Lead Score</th><th>Date Captured</th></tr></thead>
+                  <tbody id="crm-leads-list">
+                    <tr><td colspan="4" style="text-align:center; padding:24px; color:#888;">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Broadcasts Screen -->
+        <div class="screen" id="broadcasts">
+          <div class="app-screen-header">
+            <h3>Mass Broadcasts</h3>
+            <p>Send promotional messages to your CRM leads.</p>
+          </div>
+          <div class="broadcast-layout card" style="padding:24px; max-width:600px;">
+            <div class="field-group">
+              <label>Select Recipients (Leads)</label>
+              <select id="broadcast-recipients" class="field" multiple style="height:100px;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Promotional Message</label>
+              <textarea id="broadcast-message" class="field" style="height:120px;" placeholder="Hey there! Get 20% off this weekend..."></textarea>
+            </div>
+            <button class="btn-primary" id="btn-send-broadcast" style="width:100%;">Blast Message 🚀</button>
+            <p id="broadcast-status" style="margin-top:12px; font-size:14px; text-align:center;"></p>
+          </div>
+        </div>
 
         <!-- Bot Builder Screen -->
         <div class="screen" id="bot_builder">
@@ -458,6 +560,31 @@
                 </div>
               </div>
 
+              <hr style="margin:24px 0; border-color:var(--ink-10);">
+              
+              <div class="form-block">
+                <label style="display:flex; align-items:center; gap:8px;">
+                  <span>Connect Official Meta WhatsApp (Cloud API)</span>
+                  <span style="background:var(--green); color:white; padding:2px 6px; border-radius:4px; font-size:10px;">PRO</span>
+                </label>
+                <p style="font-size:12px; color:var(--ink-40); margin-bottom:12px;">Link your real WhatsApp Business account to move out of the Twilio Sandbox.</p>
+                <div class="field-row" style="margin-bottom:12px;">
+                  <div>
+                    <label>WhatsApp Business Account ID</label>
+                    <input class="field" id="meta-waba-id" placeholder="e.g. 10459345...">
+                  </div>
+                  <div>
+                    <label>Phone Number ID</label>
+                    <input class="field" id="meta-phone-id" placeholder="e.g. 1098493...">
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div style="flex:1;">
+                    <label>Permanent Access Token</label>
+                    <input class="field" type="password" id="meta-access-token" placeholder="EAA...">
+                  </div>
+                </div>
+              </div>
 
 
               <div class="save-bar" style="border:none; padding:0; background:transparent;">

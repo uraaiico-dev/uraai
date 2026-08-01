@@ -39,7 +39,10 @@ const state = {
     waNumber: "+91 98450 12345",
     igHandle: "",
     busEmail: "",
-    logoFile: null
+    logoFile: null,
+    metaWabaId: "",
+    metaPhoneId: "",
+    metaAccessToken: ""
   }
 };
 
@@ -164,6 +167,18 @@ function navigateTo(screenId) {
       title = 'Team Settings';
       setTimeout(() => renderTeamMembers(), 100);
     }
+    if (screenId === 'inbox') {
+      title = 'Live Inbox';
+      setTimeout(() => initInbox(), 100);
+    }
+    if (screenId === 'crm') {
+      title = 'CRM & Bookings';
+      setTimeout(() => initCRM(), 100);
+    }
+    if (screenId === 'broadcasts') {
+      title = 'Mass Broadcasts';
+      setTimeout(() => initBroadcasts(), 100);
+    }
     headerTitle.innerText = title;
   }
 
@@ -276,6 +291,9 @@ function syncUI() {
   document.getElementById('welcome-msg-input').value = state.welcomeMessage;
   document.getElementById('open-time-input').value = state.openTime;
   document.getElementById('close-time-input').value = state.closeTime;
+  document.getElementById('meta-waba-id').value = state.userProfile.metaWabaId || '';
+  document.getElementById('meta-phone-id').value = state.userProfile.metaPhoneId || '';
+  document.getElementById('meta-access-token').value = state.userProfile.metaAccessToken || '';
 
   // Sync Languages Tags
   document.querySelectorAll('#lang-tag-row .tag').forEach(tag => {
@@ -755,6 +773,9 @@ async function handleLogInSubmit() {
       state.closeTime = botSettings.close_time;
       state.languages = botSettings.languages || ['english'];
       state.businessKnowledge = botSettings.business_knowledge || '';
+      state.userProfile.metaWabaId = botSettings.meta_waba_id || '';
+      state.userProfile.metaPhoneId = botSettings.meta_phone_id || '';
+      state.userProfile.metaAccessToken = botSettings.meta_access_token || '';
     }
 
     if (!botSettings || !botSettings.welcome_message) {
@@ -952,6 +973,13 @@ function handlePaymentSubmit() {
 
 async function handlePaymentSuccessClose() {
   state.currentPlan = selectedUpgradeTier;
+  if (state.userProfile?.supabaseId) {
+    try {
+      await upgradeUserPlan(state.userProfile.supabaseId, selectedUpgradeTier);
+    } catch(e) {
+      console.error('Failed to upgrade plan in DB', e);
+    }
+  }
   syncUI();
   updateWhatsAppChips();
   closePaymentModal();
@@ -1231,8 +1259,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           languages: state.languages,
           waNumber: state.userProfile.waNumber,
           igHandle: state.userProfile.igHandle,
-          busEmail: state.userProfile.busEmail
+          busEmail: state.userProfile.busEmail,
+          metaWabaId: document.getElementById('meta-waba-id').value.trim(),
+          metaPhoneId: document.getElementById('meta-phone-id').value.trim(),
+          metaAccessToken: document.getElementById('meta-access-token').value.trim()
         });
+
+        // update local state
+        state.userProfile.metaWabaId = document.getElementById('meta-waba-id').value.trim();
+        state.userProfile.metaPhoneId = document.getElementById('meta-phone-id').value.trim();
+        state.userProfile.metaAccessToken = document.getElementById('meta-access-token').value.trim();
 
         console.log('Save successful!');
         addLog('system', 'Bot settings saved to Supabase database.', 'success');
@@ -1779,6 +1815,161 @@ function generateAIResponse(message) {
   // if not available in the frontend (it's mostly running via Webhook now).
   return "AI capability is routed through Twilio Webhook in production.";
 }
+
+// ─── INBOX UI ───
+let currentInboxContact = null;
+
+async function initInbox() {
+  const contactList = document.getElementById('inbox-contact-list');
+  contactList.innerHTML = `<p style="padding:16px; color:var(--ink-40); font-size:14px;">Loading chats...</p>`;
+  
+  try {
+    const contacts = await getInboxContacts(state.userProfile.supabaseId);
+    if (!contacts || contacts.length === 0) {
+      contactList.innerHTML = `<p style="padding:16px; color:var(--ink-40); font-size:14px;">No conversations yet.</p>`;
+      return;
+    }
+    
+    contactList.innerHTML = contacts.map(c => `
+      <div class="inbox-contact" onclick="openInboxChat('${c.phone}')" id="contact-${c.phone}">
+        <div class="inbox-contact-name">${c.phone}</div>
+        <div class="inbox-contact-preview">${c.lastMessage}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    console.error("Inbox load error", e);
+    contactList.innerHTML = `<p style="padding:16px; color:var(--red); font-size:14px;">Error loading chats.</p>`;
+  }
+}
+
+window.openInboxChat = async function(phone) {
+  document.querySelectorAll('.inbox-contact').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(`contact-${phone}`);
+  if(el) el.classList.add('active');
+  
+  currentInboxContact = phone;
+  document.getElementById('inbox-empty').style.display = 'none';
+  document.getElementById('inbox-chat-area').style.display = 'flex';
+  document.getElementById('inbox-active-contact').innerHTML = `<h4>${phone}</h4>`;
+  
+  const historyDiv = document.getElementById('inbox-history');
+  historyDiv.innerHTML = `<div style="text-align:center; padding:20px;">Loading history...</div>`;
+  
+  try {
+    const msgs = await getChatHistory(state.userProfile.supabaseId, phone);
+    historyDiv.innerHTML = msgs.map(m => {
+      const isOutbound = m.direction === 'outbound';
+      const msgClass = isOutbound ? 'inbox-msg-out' : 'inbox-msg-in';
+      const content = isOutbound ? (m.message_body || m.ai_reply) : m.message_body;
+      return `<div class="inbox-msg ${msgClass}">${content}</div>`;
+    }).join('');
+    historyDiv.scrollTop = historyDiv.scrollHeight;
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+document.getElementById('btn-inbox-send')?.addEventListener('click', async () => {
+  if (!currentInboxContact) return;
+  const input = document.getElementById('inbox-reply-input');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  const btn = document.getElementById('btn-inbox-send');
+  btn.disabled = true;
+  btn.innerText = '...';
+  
+  try {
+    await sendWhatsAppMessage(state.userProfile.supabaseId, currentInboxContact, text);
+    input.value = '';
+    await openInboxChat(currentInboxContact);
+  } catch (e) {
+    alert("Failed to send: " + e.message);
+  }
+  btn.disabled = false;
+  btn.innerText = 'Send';
+});
+
+// ─── CRM UI ───
+async function initCRM() {
+  const apptList = document.getElementById('crm-appointments-list');
+  const leadsList = document.getElementById('crm-leads-list');
+  
+  try {
+    const appts = await getAppointments(state.userProfile.supabaseId);
+    if (!appts || appts.length === 0) {
+      apptList.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:24px; color:#888;">No appointments yet.</td></tr>`;
+    } else {
+      apptList.innerHTML = appts.map(a => `
+        <tr>
+          <td><strong>${a.appointment_date}</strong></td>
+          <td>${a.customer_phone}</td>
+          <td>${a.service}</td>
+          <td><span class="tag ${a.status === 'pending' ? 'on' : ''}">${a.status}</span></td>
+        </tr>
+      `).join('');
+    }
+    
+    const leads = await getLeadsCRM(state.userProfile.supabaseId);
+    if (!leads || leads.length === 0) {
+      leadsList.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:24px; color:#888;">No leads yet.</td></tr>`;
+    } else {
+      leadsList.innerHTML = leads.map(l => `
+        <tr>
+          <td><strong>${l.phone}</strong></td>
+          <td>${l.channel}</td>
+          <td>${l.lead_score || 'New'}</td>
+          <td>${new Date(l.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (e) {
+    console.error("CRM load error", e);
+  }
+}
+
+// ─── BROADCASTS UI ───
+async function initBroadcasts() {
+  const select = document.getElementById('broadcast-recipients');
+  try {
+    const leads = await getLeadsCRM(state.userProfile.supabaseId);
+    select.innerHTML = leads.map(l => `<option value="${l.phone}">${l.phone}</option>`).join('');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+document.getElementById('btn-send-broadcast')?.addEventListener('click', async () => {
+  const select = document.getElementById('broadcast-recipients');
+  const recipients = Array.from(select.selectedOptions).map(opt => opt.value);
+  const message = document.getElementById('broadcast-message').value.trim();
+  const statusEl = document.getElementById('broadcast-status');
+  
+  if (recipients.length === 0 || !message) {
+    statusEl.innerText = 'Please select recipients and enter a message.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+  
+  const btn = document.getElementById('btn-send-broadcast');
+  btn.disabled = true;
+  btn.innerText = 'Sending...';
+  statusEl.innerText = '';
+  
+  try {
+    const res = await sendBroadcastMessage(state.userProfile.supabaseId, recipients, message);
+    statusEl.innerText = `Success! Sent to ${res.successCount} contacts. Failed: ${res.failCount}`;
+    statusEl.style.color = 'var(--green)';
+    document.getElementById('broadcast-message').value = '';
+    select.selectedIndex = -1;
+  } catch (e) {
+    statusEl.innerText = 'Broadcast failed: ' + e.message;
+    statusEl.style.color = 'var(--red)';
+  }
+  
+  btn.disabled = false;
+  btn.innerText = 'Blast Message 🚀';
+});
 
 // ─── TEAM MEMBERS UI ───
 async function renderTeamMembers() {
