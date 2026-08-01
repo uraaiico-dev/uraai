@@ -866,11 +866,10 @@ async function handleLogInSubmit() {
       state.businessKnowledge = botSettings.business_knowledge || '';
       menuItemsData = botSettings.menu_items || [];
       renderMenuItems();
-    }
-    
-    state.userProfile.metaWabaId = botSettings.meta_waba_id || '';
-    state.userProfile.metaPhoneId = botSettings.meta_phone_id || '';
-    state.userProfile.metaAccessToken = botSettings.meta_access_token || '';
+      
+      state.userProfile.metaWabaId = botSettings.meta_waba_id || '';
+      state.userProfile.metaPhoneId = botSettings.meta_phone_id || '';
+      state.userProfile.metaAccessToken = botSettings.meta_access_token || '';
     }
 
     if (!botSettings || !botSettings.welcome_message) {
