@@ -1781,10 +1781,17 @@ const AI_FINAL_Q = {
   chips: ["Nothing extra", "Ladies only", "Parking available"]
 };
 
+const AI_BOOKING_REQS_Q = {
+  q: "What details must the bot collect to confirm a booking? 📝",
+  label: "Booking Details",
+  placeholder: "e.g. Name, Phone, Service, Preferred Time, Staff member",
+  chips: ["Name, Phone, Service, Time", "Name & Phone only", "Add Preferred Staff"]
+};
+
 function getAIQuestions() {
   const bizType = state.userProfile.businessType || 'default';
   const qs = AI_BUSINESS_QUESTIONS[bizType] || AI_BUSINESS_QUESTIONS['default'];
-  return [...qs, AI_LOCATION_Q, AI_FINAL_Q];
+  return [...qs, AI_BOOKING_REQS_Q, AI_LOCATION_Q, AI_FINAL_Q];
 }
 
 function aiUpdateProgress(step) {
@@ -1796,7 +1803,7 @@ function aiUpdateProgress(step) {
   if (fill) fill.style.width = pct + '%';
   if (count) count.textContent = step + ' / ' + total;
   const labels = ['Getting started...', 'Timings ✓', 'Services ✓', 'Prices ✓',
-    'Booking ✓', 'Offers ✓', 'Location ✓', 'Almost there!', 'All done! 🎉'];
+    'Booking ✓', 'Offers ✓', 'Details ✓', 'Location ✓', 'Almost there!', 'All done! 🎉'];
   if (label) label.textContent = labels[Math.min(step, labels.length - 1)];
 }
 
