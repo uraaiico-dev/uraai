@@ -160,6 +160,10 @@ function navigateTo(screenId) {
         setTimeout(() => initAISetup(), 300);
       }
     }
+    if (screenId === 'team') {
+      title = 'Team Settings';
+      setTimeout(() => renderTeamMembers(), 100);
+    }
     headerTitle.innerText = title;
   }
 
@@ -244,6 +248,17 @@ function syncUI() {
   const planBadge = document.getElementById('app-header-plan-badge');
   if (planBadge) {
     planBadge.innerText = `${state.currentPlan.toUpperCase()} PLAN`;
+  }
+
+  // Enforce RBAC
+  if (state.userProfile.teamRole === 'staff') {
+    document.querySelectorAll('[data-tab="bot_builder"], [data-tab="ai_setup"], [data-tab="pricing"], [data-tab="team"]').forEach(el => {
+      el.style.display = 'none';
+    });
+  } else {
+    document.querySelectorAll('[data-tab="bot_builder"], [data-tab="ai_setup"], [data-tab="pricing"], [data-tab="team"]').forEach(el => {
+      el.style.display = 'flex';
+    });
   }
 
   // Stats Counters
@@ -731,6 +746,7 @@ async function handleLogInSubmit() {
     state.userProfile.email = profile.email;
     state.userProfile.businessName = profile.business_name;
     state.userProfile.businessType = profile.business_type;
+    state.userProfile.teamRole = profile.team_role || 'admin';
     state.currentPlan = profile.plan || 'starter';
 
     if (botSettings) {
@@ -745,6 +761,18 @@ async function handleLogInSubmit() {
       state.welcomeMessage = `வணக்கம்! Welcome to ${profile.business_name}.\nHow can I help you today?`;
     }
 
+    // Load actual dashboard stats
+    try {
+      const statsData = await getDashboardStats(userId);
+      if (statsData) {
+        state.stats.repliesToday = statsData.replies;
+        state.stats.leadsSaved = statsData.leads;
+        state.stats.avgResponse = statsData.avgTime;
+        state.stats.satisfaction = statsData.satisfaction;
+      }
+    } catch (e) {
+      console.warn("Failed to load dashboard stats", e);
+    }
 
     addLog('system', `Login success. Loaded profile for ${profile.full_name}`, 'success');
 
@@ -1251,6 +1279,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Team Invite Button
+  const btnInvite = document.getElementById('btn-invite-team');
+  if (btnInvite) {
+    btnInvite.addEventListener('click', async () => {
+      const email = document.getElementById('team-invite-email').value.trim();
+      const role = document.getElementById('team-invite-role').value;
+      if (!email) return alert('Enter an email address');
+      btnInvite.innerText = 'Sending...';
+      btnInvite.disabled = true;
+      try {
+        await inviteTeamMember(state.userProfile.supabaseId, email, role);
+        document.getElementById('team-invite-email').value = '';
+        addLog('system', `Invited team member: ${email} as ${role}`, 'success');
+        await renderTeamMembers();
+      } catch (err) {
+        alert('Failed to invite: ' + err.message);
+      }
+      btnInvite.innerText = 'Send Invite';
+      btnInvite.disabled = false;
+    });
+  }
+
   // --- MOBILE VIEWS SWITCHERS ---
   const mobOptMerchant = document.getElementById('mob-opt-merchant');
   const mobOptCustomer = document.getElementById('mob-opt-customer');
@@ -1722,6 +1772,50 @@ function aiShowChips(items, isLocation) {
     };
     chips.appendChild(btn);
   });
+}
+
+function generateAIResponse(message) {
+  // Uses Gemini endpoint natively via a fetch call to backend or we can mock it 
+  // if not available in the frontend (it's mostly running via Webhook now).
+  return "AI capability is routed through Twilio Webhook in production.";
+}
+
+// ─── TEAM MEMBERS UI ───
+async function renderTeamMembers() {
+  const tbody = document.getElementById('team-members-list');
+  if (!tbody) return;
+  
+  try {
+    const members = await getTeamMembers(state.userProfile.supabaseId);
+    if (!members || members.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:24px; color:#888;">No team members yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = members.map(m => `
+      <tr>
+        <td><strong>${m.member_email}</strong></td>
+        <td><span class="tag ${m.role === 'admin' ? 'on' : ''}">${m.role}</span></td>
+        <td>${new Date(m.invited_at).toLocaleDateString()}</td>
+        <td>
+          <button class="btn-ghost" style="color:var(--text-light); padding:4px 8px;" onclick="handleRemoveTeamMember('${m.id}')">Remove</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error("Failed to load team members", err);
+  }
+}
+
+window.handleRemoveTeamMember = async function(id) {
+  if (!confirm("Are you sure you want to remove this member?")) return;
+  try {
+    await removeTeamMember(id);
+    addLog('system', 'Removed team member.', 'default');
+    renderTeamMembers();
+  } catch (err) {
+    alert("Failed to remove member: " + err.message);
+  }
 }
 
 function aiRequestLocation() {

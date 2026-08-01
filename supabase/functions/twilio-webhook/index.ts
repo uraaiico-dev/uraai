@@ -178,7 +178,8 @@ YOUR RULES:
 3. Be friendly, warm, concise — like a helpful shop assistant
 4. If you don't know something specific, say 'Please contact us directly for this'
 5. NEVER make up prices, timings, or services not mentioned above
-6. End with a helpful follow-up when appropriate`;
+6. End with a helpful follow-up when appropriate
+7. IMPORTANT BOOKING RULE: If the user provides a clear date, time, and service for an appointment that aligns with the business hours and knowledge, you MUST secretly include a booking tag at the very end of your response exactly like this: <BOOKING date="YYYY-MM-DD" time="HH:MM" service="Service Name">`;
 
       const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
       const geminiResponse = await fetch(
@@ -201,6 +202,35 @@ YOUR RULES:
         geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ||
         "Sorry, I couldn't understand that. Please contact us directly.";
       console.log(`[GEMINI] Reply: ${replyMessage}`);
+    }
+
+    // ─── 6b. Parse Booking Tags ───
+    let bookingMatch = replyMessage.match(/<BOOKING\s+date="([^"]+)"\s+time="([^"]+)"\s+service="([^"]+)">/);
+    if (bookingMatch) {
+      const bDate = bookingMatch[1];
+      const bTime = bookingMatch[2];
+      const bService = bookingMatch[3];
+
+      // Strip the tag so customer doesn't see it
+      replyMessage = replyMessage.replace(bookingMatch[0], '').trim();
+
+      // Clean phone number for database
+      const cleanFromNumber = fromNumber.replace("whatsapp:", "").trim();
+
+      console.log(`[BOOKING] Extracted AI booking: ${bDate} ${bTime} for ${bService}`);
+      
+      const { error: apptError } = await supabase.from('appointments').insert({
+        user_id: user_id,
+        customer_phone: cleanFromNumber,
+        service: bService,
+        appointment_date: `${bDate} ${bTime}`
+      });
+
+      if (apptError) {
+        console.error('[BOOKING] Failed to save appointment:', apptError);
+      } else {
+        console.log('[BOOKING] Appointment saved successfully');
+      }
     }
 
     // ─── 7. Send reply via Twilio ───

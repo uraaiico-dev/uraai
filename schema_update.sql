@@ -73,3 +73,18 @@ ADD COLUMN IF NOT EXISTS reply_reset_date DATE DEFAULT CURRENT_DATE;
 ALTER TABLE public.bot_settings
 ADD COLUMN IF NOT EXISTS business_knowledge TEXT,
 ADD COLUMN IF NOT EXISTS onboarding_complete BOOLEAN DEFAULT false;
+
+-- Create appointments table
+CREATE TABLE IF NOT EXISTS public.appointments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    customer_phone TEXT NOT NULL,
+    service TEXT,
+    appointment_date TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own appointments" ON public.appointments
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);

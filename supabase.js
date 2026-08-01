@@ -196,3 +196,70 @@ async function getLeads(userId) {
   if (error) throw error;
   return data || [];
 }
+
+// ─── DASHBOARD ANALYTICS FUNCTIONS ───
+
+// Fetch stats for dashboard
+async function getDashboardStats(userId) {
+  if (!db) return { replies: 0, leads: 0, inbound: 0, avgTime: '2.1s', satisfaction: '98%' };
+  
+  // Get leads count
+  const { count: leadsCount } = await db
+    .from('leads')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+    
+  // Get whatsapp replies count
+  const { count: repliesCount } = await db
+    .from('whatsapp_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('direction', 'outbound');
+    
+  // Get inbound messages count
+  const { count: inboundCount } = await db
+    .from('whatsapp_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('direction', 'inbound');
+
+  return {
+    replies: repliesCount || 0,
+    leads: leadsCount || 0,
+    inbound: inboundCount || 0,
+    avgTime: '1.4s', // Mocked generic stat
+    satisfaction: '99%' // Mocked generic stat
+  };
+}
+
+// ─── TEAM MEMBERS FUNCTIONS ───
+
+async function getTeamMembers(userId) {
+  if (!db) return [];
+  const { data, error } = await db
+    .from('team_members')
+    .select('*')
+    .eq('owner_id', userId)
+    .order('invited_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function inviteTeamMember(userId, email, role) {
+  if (!db) throw new Error("Supabase is not configured.");
+  const { data, error } = await db
+    .from('team_members')
+    .insert({ owner_id: userId, member_email: email, role });
+  if (error) throw error;
+  return data;
+}
+
+async function removeTeamMember(inviteId) {
+  if (!db) throw new Error("Supabase is not configured.");
+  const { data, error } = await db
+    .from('team_members')
+    .delete()
+    .eq('id', inviteId);
+  if (error) throw error;
+  return data;
+}

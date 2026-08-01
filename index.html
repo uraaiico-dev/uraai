@@ -198,6 +198,10 @@
           <span class="sidebar-item-icon">✨</span>
           <span class="sidebar-item-label">AI Setup</span>
         </a>
+        <a href="#" class="sidebar-item" data-tab="team">
+          <span class="sidebar-item-icon">👥</span>
+          <span class="sidebar-item-label">Team</span>
+        </a>
         <a href="#" class="sidebar-item" data-tab="analytics">
           <span class="sidebar-item-icon">📊</span>
           <span class="sidebar-item-label">Analytics</span>
@@ -235,6 +239,10 @@
       <a href="#" class="mobile-nav-item" data-tab="ai_setup">
         <span class="mobile-nav-icon">✨</span>
         <span class="mobile-nav-label">AI Setup</span>
+      </a>
+      <a href="#" class="mobile-nav-item" data-tab="team">
+        <span class="mobile-nav-icon">👥</span>
+        <span class="mobile-nav-label">Team</span>
       </a>
       <a href="#" class="mobile-nav-item" data-tab="analytics">
         <span class="mobile-nav-icon">📊</span>
@@ -638,6 +646,53 @@
 
             </div>
 
+          </div>
+        </div>
+
+        <!-- Team Screen -->
+        <div class="screen" id="team">
+          <div class="app-screen-header">
+            <h3>Team Settings</h3>
+            <p>Manage access and roles for your staff members.</p>
+          </div>
+
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+              <h4 class="card-title">Invite Member</h4>
+            </div>
+            <div class="card-body">
+              <div style="display:flex; gap:12px; margin-bottom:16px;">
+                <input type="email" class="field" id="team-invite-email" placeholder="staff@example.com" style="flex:1;">
+                <select class="field" id="team-invite-role" style="width:120px;">
+                  <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <button class="btn-primary" id="btn-invite-team">Send Invite</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h4 class="card-title">Active Members</h4>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="leads-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Date Invited</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="team-members-list">
+                  <tr>
+                    <td colspan="4" style="text-align:center; padding:24px; color:#888;">No team members yet.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
