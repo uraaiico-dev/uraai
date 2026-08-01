@@ -303,11 +303,19 @@ async function getInboxContacts(userId) {
   }
   return Array.from(contactsMap.values());
 }
-// ─── BROADCAST FUNCTIONS ───
+// ─── BROADCAST & SIMULATOR FUNCTIONS ───
 
 async function sendBroadcastMessage(userId, recipients, message) {
   const { data, error } = await db.functions.invoke('twilio-broadcast', {
     body: { recipients, message, userId }
+  });
+  if (error) throw error;
+  return data;
+}
+
+async function simulateChat(userId, message, customerPhone) {
+  const { data, error } = await db.functions.invoke('chat-simulator', {
+    body: { userId, message, customerPhone }
   });
   if (error) throw error;
   return data;

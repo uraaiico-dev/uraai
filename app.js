@@ -508,7 +508,7 @@ function updateWhatsAppChips() {
   chipsRow.appendChild(chipLang);
 }
 
-function sendCustomerMessage(text) {
+async function sendCustomerMessage(text) {
   if (!text.trim()) return;
 
   appendWAMessage('sent', text);
@@ -520,20 +520,43 @@ function sendCustomerMessage(text) {
   showWATypingIndicator();
   waChatArea.scrollTop = waChatArea.scrollHeight;
 
-  setTimeout(() => {
-    removeWATypingIndicator();
-    const replyText = processBotEngine(text);
-    appendWAMessage('received', replyText, true);
-    addLog('engine', `Outbound WhatsApp auto-reply sent.`, 'success');
+  const useAI = document.getElementById('simulator-ai-toggle')?.checked;
 
-    if (state.activeScreen !== 'bot_builder' && state.activeScreen !== 'dashboard') {
-      triggerNotification(`💬 Msg from +91 ${state.userProfile.phone.slice(-5) || '98450'}`, `Auto-responded: "${replyText.substring(0, 30)}..."`);
+  if (useAI) {
+    try {
+      if (!state.userProfile.supabaseId) throw new Error("Not logged in");
+      const res = await simulateChat(state.userProfile.supabaseId, text, "Simulator Tester");
+      
+      removeWATypingIndicator();
+      appendWAMessage('received', res.reply, true);
+      addLog('engine', `AI Edge Function reply received.`, 'success');
+
+      if (res.bookingMade) {
+        addLog('engine', `AI Booking Tag extracted and saved!`, 'success');
+        triggerNotification(`📅 New Booking!`, `An appointment was automatically saved.`);
+        if (state.activeScreen === 'crm') initCRM(); // Refresh CRM if open
+      }
+    } catch (e) {
+      removeWATypingIndicator();
+      appendWAMessage('received', `[Simulator Error: ${e.message}]`, true);
+      addLog('engine', `AI Simulator failed: ${e.message}`, 'error');
     }
+  } else {
+    setTimeout(() => {
+      removeWATypingIndicator();
+      const replyText = processBotEngine(text);
+      appendWAMessage('received', replyText, true);
+      addLog('engine', `Outbound WhatsApp auto-reply sent.`, 'success');
 
-    state.stats.repliesToday++;
-    document.getElementById('stat-replies').innerText = Number(state.stats.repliesToday).toLocaleString();
-    waChatArea.scrollTop = waChatArea.scrollHeight;
-  }, 1000);
+      if (state.activeScreen !== 'bot_builder' && state.activeScreen !== 'dashboard') {
+        triggerNotification(`💬 Msg from +91 ${state.userProfile.phone.slice(-5) || '98450'}`, `Auto-responded: "${replyText.substring(0, 30)}..."`);
+      }
+    }, 1000);
+  }
+
+  state.stats.repliesToday++;
+  document.getElementById('stat-replies').innerText = Number(state.stats.repliesToday).toLocaleString();
+  waChatArea.scrollTop = waChatArea.scrollHeight;
 }
 
 function appendWAMessage(direction, text, isAutomated = false) {
