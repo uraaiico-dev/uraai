@@ -1096,68 +1096,34 @@
         <div class="modal-tab-opt" id="tab-opt-login">Log In</div>
       </div>
 
-      <!-- Sign Up Form -->
-      <div id="form-panel-signup">
-        <div class="modal-title">Create Account</div>
-        <div class="modal-desc">Configure your bot instance in seconds. No credit card required.</div>
+      <!-- Conversational Auth UI -->
+      <div id="auth-bot-ui">
+        <div class="auth-chat-history" id="auth-chat-history">
+          <!-- Bubbles go here -->
+        </div>
         
-        <div class="modal-form-block">
-          <label>Full Name</label>
-          <input type="text" class="modal-field" id="su-fullname" placeholder="e.g. Rohan Mehta">
+        <!-- Hidden inputs for backward compatibility -->
+        <div style="display:none;">
+          <input type="text" id="su-fullname">
+          <input type="email" id="su-email">
+          <input type="password" id="su-password">
+          <input type="tel" id="su-phone">
+          <input type="text" id="su-busname">
+          <select id="su-bustype"><option value="Other Business">Other Service</option></select>
+          <input type="text" id="su-city">
+          <button id="su-btn-submit"></button>
+          
+          <input type="email" id="li-email">
+          <input type="password" id="li-password">
+          <button id="li-btn-submit"></button>
         </div>
-        <div class="modal-form-block">
-          <label>Email Address</label>
-          <input type="email" class="modal-field" id="su-email" placeholder="e.g. rohan@mehtasalon.com">
-        </div>
-        <div class="form-group-grid">
-          <div class="modal-form-block">
-            <label>Password</label>
-            <input type="password" class="modal-field" id="su-password" placeholder="••••••••">
-          </div>
-          <div class="modal-form-block">
-            <label>Phone Number</label>
-            <input type="tel" class="modal-field" id="su-phone" placeholder="e.g. +91 98765 43210">
-          </div>
-        </div>
-        <div class="form-group-grid">
-          <div class="modal-form-block">
-            <label>Business Name</label>
-            <input type="text" class="modal-field" id="su-busname" placeholder="e.g. Mehta Salon">
-          </div>
-          <div class="modal-form-block">
-            <label>Business Type</label>
-            <select class="modal-field" id="su-bustype">
-              <option value="Salon & Beauty">Salon & Beauty</option>
-              <option value="Medical Clinic">Medical Clinic</option>
-              <option value="Education/Coaching">Education / Coaching</option>
-              <option value="E-commerce Store">E-commerce Store</option>
-              <option value="Restaurant/Café">Restaurant / Café</option>
-              <option value="Other Business">Other Service</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-form-block">
-          <label>City</label>
-          <input type="text" class="modal-field" id="su-city" placeholder="e.g. Chennai">
-          <span class="form-hint">Used to recommend local languages.</span>
-        </div>
-        <button class="modal-submit-btn" id="su-btn-submit">Continue to Profile Setup →</button>
-      </div>
-
-      <!-- Log In Form -->
-      <div id="form-panel-login" style="display:none;">
-        <div class="modal-title">Welcome Back</div>
-        <div class="modal-desc">Access your bot and diagnostics dashboard.</div>
         
-        <div class="modal-form-block">
-          <label>Email Address</label>
-          <input type="email" class="modal-field" id="li-email" placeholder="e.g. sanjay@priyasalon.com">
+        <div class="auth-input-area">
+          <input type="text" id="auth-bot-input" class="auth-interactive-input" placeholder="Type here..." autocomplete="off">
+          <button id="auth-bot-send" class="auth-send-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/></svg>
+          </button>
         </div>
-        <div class="modal-form-block">
-          <label>Password</label>
-          <input type="password" class="modal-field" id="li-password" placeholder="••••••••">
-        </div>
-        <button class="modal-submit-btn" id="li-btn-submit">Access Dashboard →</button>
       </div>
     </div>
   </div>
@@ -1295,5 +1261,6 @@
 
   <script src="supabase.js"></script>
   <script src="app.js"></script>
+  <script src="authBot.js"></script>
 </body>
 </html>
