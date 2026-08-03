@@ -297,7 +297,7 @@ body {
 }
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 @media (max-width: 768px) {
@@ -2429,7 +2429,7 @@ body.app-logged-in .bg-glow-3 {
 /* Pricing Grid view on desktop inside Billing */
 .billing-plans-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
   margin-top: 12px;
 }
