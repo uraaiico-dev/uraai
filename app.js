@@ -1040,6 +1040,10 @@ function handleGuestLogin() {
 
 // Session Logout Handler
 async function handleLogout() {
+  if (!confirm('Are you sure you want to log out?')) {
+    return;
+  }
+
   try {
     await authLogOut();
   } catch (err) {
