@@ -3704,3 +3704,134 @@ button:not(.loading) .spinner-inline {
   font-size: 14px;
   opacity: 0.8;
 }
+
+/* --- Conversational Auth UI --- */
+#auth-bot-ui {
+  display: flex;
+  flex-direction: column;
+  height: 450px;
+  background: var(--bg-card);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  position: relative;
+}
+
+.auth-chat-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-bubble-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 85%;
+  animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.auth-bubble-container.bot {
+  align-self: flex-start;
+}
+
+.auth-bubble-container.user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.auth-bot-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary), var(--violet-2));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.auth-bubble {
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.auth-bot {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink-100);
+  border-bottom-left-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.auth-user {
+  background: linear-gradient(135deg, var(--primary), var(--violet-2));
+  color: white;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.auth-input-area {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.auth-interactive-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 16px;
+  border-radius: 20px;
+  color: var(--ink-100);
+  font-size: 15px;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.auth-interactive-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.auth-interactive-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.auth-send-btn {
+  background: var(--primary);
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.auth-send-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+}
+
+.auth-send-btn:active {
+  transform: scale(0.95);
+}
+
+.auth-send-btn svg {
+  fill: currentColor;
+}

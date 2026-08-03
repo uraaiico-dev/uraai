@@ -41,7 +41,8 @@ function initAuthBot(mode) {
     }
   }
 
-  setTimeout(askNextAuthQuestion, 300);
+  clearTimeout(window.authBotTimeout);
+  window.authBotTimeout = setTimeout(askNextAuthQuestion, 300);
 }
 
 function askNextAuthQuestion() {
@@ -66,10 +67,23 @@ function askNextAuthQuestion() {
 function addAuthBubble(text, sender) {
   const history = document.getElementById('auth-chat-history');
   if(!history) return;
+  
+  const container = document.createElement('div');
+  container.className = 'auth-bubble-container ' + sender;
+  
+  if (sender === 'bot') {
+    const avatar = document.createElement('div');
+    avatar.className = 'auth-bot-avatar';
+    avatar.innerText = '🤖';
+    container.appendChild(avatar);
+  }
+  
   const bubble = document.createElement('div');
   bubble.className = 'auth-bubble ' + (sender === 'bot' ? 'auth-bot' : 'auth-user');
   bubble.innerText = text;
-  history.appendChild(bubble);
+  
+  container.appendChild(bubble);
+  history.appendChild(container);
   history.scrollTop = history.scrollHeight;
 }
 
@@ -99,7 +113,8 @@ function handleAuthSubmit() {
   authBotState.data[step.key] = val;
   
   authBotState.stepIndex++;
-  setTimeout(askNextAuthQuestion, 400);
+  clearTimeout(window.authBotTimeout);
+  window.authBotTimeout = setTimeout(askNextAuthQuestion, 400);
 }
 
 function finishAuthFlow() {
