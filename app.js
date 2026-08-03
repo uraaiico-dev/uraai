@@ -1039,10 +1039,11 @@ function handleGuestLogin() {
 }
 
 // Session Logout Handler
-async function handleLogout() {
-  if (!confirm('Are you sure you want to log out?')) {
-    return;
-  }
+function handleLogout() {
+  document.getElementById('logout-confirm-modal').classList.add('active');
+}
+
+async function executeLogout() {
 
   try {
     await authLogOut();
@@ -1072,7 +1073,29 @@ async function handleLogout() {
   syncUI();
   addLog('system', 'User logged out. Session destroyed.', 'default');
   triggerNotification('🔒 Logged Out', 'Your session has ended.');
+  
+  document.getElementById('logout-confirm-modal').classList.remove('active');
 }
+
+// Hook up logout modal buttons
+document.addEventListener('DOMContentLoaded', () => {
+  const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+  const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
+  
+  if (cancelLogoutBtn) {
+    cancelLogoutBtn.addEventListener('click', () => {
+      document.getElementById('logout-confirm-modal').classList.remove('active');
+    });
+  }
+  
+  if (confirmLogoutBtn) {
+    confirmLogoutBtn.addEventListener('click', async () => {
+      confirmLogoutBtn.classList.add('loading');
+      await executeLogout();
+      confirmLogoutBtn.classList.remove('loading');
+    });
+  }
+});
 
 // Authorize Razorpay checkout payment handler
 function handlePaymentSubmit() {
