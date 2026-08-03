@@ -2592,13 +2592,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Logout Execution Bridge
-window.executeLogout = function() {
+window.executeLogout = async function() {
   const modal = document.getElementById('logout-confirm-modal');
   if (modal) modal.classList.remove('active');
   
   if (typeof authLogOut === 'function') {
-    authLogOut();
+    try {
+      await authLogOut();
+      window.location.reload();
+    } catch(err) {
+      console.error(err);
+      window.location.reload();
+    }
   } else {
     console.error('authLogOut function is not defined.');
+    window.location.reload();
   }
 };
