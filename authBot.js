@@ -117,9 +117,14 @@ function handleAuthSubmit() {
   window.authBotTimeout = setTimeout(askNextAuthQuestion, 400);
 }
 
-function finishAuthFlow() {
+async function finishAuthFlow() {
   addAuthBubble('Processing your request... ⚙️', 'bot');
   
+  // Disable input while processing
+  const inputEl = document.getElementById('auth-bot-input');
+  if(inputEl) inputEl.disabled = true;
+
+  let success = false;
   if (authBotState.mode === 'signup') {
     document.getElementById('su-fullname').value = authBotState.data.name || '';
     document.getElementById('su-email').value = authBotState.data.email || '';
@@ -128,16 +133,29 @@ function finishAuthFlow() {
     document.getElementById('su-busname').value = authBotState.data.busname || '';
     document.getElementById('su-city').value = authBotState.data.city || '';
     
-    // Simulate click
-    const btn = document.getElementById('su-btn-submit');
-    if (btn) btn.click();
+    if (typeof handleSignUpSubmit === 'function') {
+      success = await handleSignUpSubmit();
+    }
   } else {
     document.getElementById('li-email').value = authBotState.data.email || '';
     document.getElementById('li-password').value = authBotState.data.password || '';
     
-    // Simulate click
-    const btn = document.getElementById('li-btn-submit');
-    if (btn) btn.click();
+    if (typeof handleLogInSubmit === 'function') {
+      success = await handleLogInSubmit();
+    }
+  }
+  
+  if (!success) {
+    // If login/signup failed (e.g. wrong password), drop back one step to retry password
+    setTimeout(() => {
+      addAuthBubble('Oops, that didn\'t work. Please check your credentials and try again. 🥺', 'bot');
+      authBotState.stepIndex--; 
+      if(inputEl) {
+        inputEl.disabled = false;
+        inputEl.value = '';
+      }
+      setTimeout(askNextAuthQuestion, 1000);
+    }, 500);
   }
 }
 

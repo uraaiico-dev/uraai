@@ -945,12 +945,13 @@ async function handleSignUpSubmit() {
     document.getElementById('prof-wanumber').value = phone;
     document.getElementById('prof-email').value = email;
     setTimeout(() => openProfileModal(), 300);
-
+    return true;
   } catch (err) {
     triggerNotification('Error', err.message || 'Signup failed.');
     const btn = document.getElementById('su-btn-submit');
     btn.classList.remove('loading');
     btn.disabled = false;
+    return false;
   }
 }
 
@@ -1042,12 +1043,13 @@ async function handleLogInSubmit() {
     `;
 
     navigateTo('dashboard');
-
+    return true;
   } catch (err) {
     triggerNotification('Error', err.message || 'Login failed.');
     const btn = document.getElementById('li-btn-submit');
     btn.classList.remove('loading');
     btn.disabled = false;
+    return false;
   }
 }
 
