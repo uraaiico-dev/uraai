@@ -47,6 +47,41 @@ const state = {
   }
 };
 
+// --- NOTIFICATION SYSTEM ---
+window.triggerNotification = function(type, message) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  
+  const toast = document.createElement('div');
+  const isError = type.toLowerCase() === 'error';
+  toast.className = `toast ${isError ? 'error' : 'success'}`;
+  
+  let icon = isError ? '⚠️' : '✅';
+  
+  toast.innerHTML = `
+    <div style="font-size:20px;">${icon}</div>
+    <div>
+      <span class="toast-title">${type}</span>
+      <span class="toast-msg">${message}</span>
+    </div>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
+  
+  // Remove after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 4000);
+};
+
 let menuItemsData = [];
 
 function renderMenuItems() {
@@ -778,14 +813,14 @@ async function handleSignUpSubmit() {
   const city = document.getElementById('su-city').value.trim();
 
   if (!fullName || !email || !password || !phone || !businessName || !city) {
-    alert('Please fill out all signup fields.');
+    triggerNotification('Error', 'Please fill out all signup fields.');
     return;
   }
 
   try {
     // Show loading state
     const btn = document.getElementById('su-btn-submit');
-    btn.innerText = 'Creating account...';
+    btn.classList.add('loading');
     btn.disabled = true;
 
     // 1. Create auth account in Supabase
@@ -818,9 +853,9 @@ async function handleSignUpSubmit() {
     setTimeout(() => openProfileModal(), 300);
 
   } catch (err) {
-    alert('Signup failed: ' + err.message);
+    triggerNotification('Error', err.message || 'Signup failed.');
     const btn = document.getElementById('su-btn-submit');
-    btn.innerText = 'Continue to Profile Setup →';
+    btn.classList.remove('loading');
     btn.disabled = false;
   }
 }
@@ -831,13 +866,13 @@ async function handleLogInSubmit() {
   const password = document.getElementById('li-password').value.trim();
 
   if (!email || !password) {
-    alert('Please fill out email and password.');
+    triggerNotification('Error', 'Please fill out email and password.');
     return;
   }
 
   try {
     const btn = document.getElementById('li-btn-submit');
-    btn.innerText = 'Logging in...';
+    btn.classList.add('loading');
     btn.disabled = true;
 
     // 1. Auth with Supabase
@@ -915,9 +950,9 @@ async function handleLogInSubmit() {
     navigateTo('dashboard');
 
   } catch (err) {
-    alert('Login failed: ' + err.message);
+    triggerNotification('Error', err.message || 'Login failed.');
     const btn = document.getElementById('li-btn-submit');
-    btn.innerText = 'Access Dashboard →';
+    btn.classList.remove('loading');
     btn.disabled = false;
   }
 }
@@ -932,7 +967,7 @@ function handleProfileSubmit() {
   const busEmail = document.getElementById('prof-email').value.trim();
 
   if (!waNumber || !openTime || !closeTime) {
-    alert('Please fill out WhatsApp number and hours.');
+    triggerNotification('Error', 'Please fill out WhatsApp number and hours.');
     return;
   }
 
@@ -1335,8 +1370,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (saveChangesBtn) {
     saveChangesBtn.onclick = async () => {
       saveChangesBtn.disabled = true;
+      saveChangesBtn.classList.add('loading');
       const textSpan = saveChangesBtn.querySelector('span');
-      textSpan.innerText = 'Saving...';
 
       console.log('Save clicked — supabaseId:', state.userProfile.supabaseId);
       console.log('State to save:', {
@@ -1380,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       saveChangesBtn.disabled = false;
-      textSpan.innerText = 'Save Changes';
+      saveChangesBtn.classList.remove('loading');
     };
   }
 
@@ -1744,9 +1779,11 @@ async function renderRecentLeads() {
     let htmlContent = '';
     if (leads.length === 0) {
       htmlContent = `
-        <p style="font-size:13px;color:var(--ink-40);text-align:center;padding:20px 0;">
-          No leads yet — leads appear here when customers message your bot
-        </p>`;
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-title">No leads yet</div>
+          <div class="empty-state-desc">Leads appear here automatically when customers message your bot.</div>
+        </div>`;
     } else {
       htmlContent = leads.slice(0, 5).map(lead => `
         <div class="lead-row">
@@ -1767,6 +1804,7 @@ async function renderRecentLeads() {
     });
   } catch (err) {
     console.error('Failed to load leads:', err);
+    triggerNotification('Error', 'Failed to load recent leads.');
   }
 }
 

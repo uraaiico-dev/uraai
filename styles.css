@@ -3585,3 +3585,105 @@ body.app-loading::after {
   color: #16a34a;
 }
 
+/* ==================== UX POLISH: TOAST NOTIFICATIONS ==================== */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.toast {
+  background: white;
+  color: var(--ink-80);
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+  min-width: 300px;
+  border-left: 4px solid var(--primary);
+}
+.toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+.toast.error {
+  border-left-color: var(--ember);
+}
+.toast.success {
+  border-left-color: #10B981;
+}
+.toast-title {
+  font-weight: 700;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 2px;
+}
+.toast-msg {
+  font-size: 13px;
+  color: var(--ink-50);
+}
+
+/* ==================== UX POLISH: LOADING SPINNERS ==================== */
+.spinner-inline {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+button.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+button.loading .spinner-inline {
+  display: inline-block;
+}
+button:not(.loading) .spinner-inline {
+  display: none;
+}
+
+/* ==================== UX POLISH: EMPTY STATES ==================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: white;
+  border-radius: 16px;
+  border: 1px dashed var(--ink-20);
+  margin: 20px 0;
+}
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-80);
+  margin-bottom: 8px;
+}
+.empty-state-desc {
+  font-size: 14px;
+  color: var(--ink-50);
+  max-width: 400px;
+}
