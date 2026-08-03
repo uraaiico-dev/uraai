@@ -647,9 +647,9 @@ function openPaymentModal(tier) {
 
   // Set checkout summary text
   if (tier === 'pro') {
-    summaryText.innerText = 'Pro Subscription Plan — ₹499/month';
+    summaryText.innerText = 'Pro Subscription Plan — ₹1,999/month';
   } else if (tier === 'max') {
-    summaryText.innerText = 'Max Subscription Plan — ₹999/month';
+    summaryText.innerText = 'Max Subscription Plan — ₹3,999/month';
   } else if (tier === 'starter') {
     // Starter downgrade triggers instantly
     state.currentPlan = 'starter';
@@ -1213,7 +1213,7 @@ function handlePaymentSubmit() {
     document.getElementById('payment-loading-panel').style.display = 'none';
     document.getElementById('payment-success-panel').style.display = 'flex';
 
-    const chargeAmount = selectedUpgradeTier === 'pro' ? '₹499' : '₹999';
+    const chargeAmount = selectedUpgradeTier === 'pro' ? '₹1,999' : '₹3,999';
     document.getElementById('payment-success-msg').innerText = `Charged ${chargeAmount} successfully via secure Razorpay checkout.`;
 
     addLog('system', `Payment Authorization Success. Gateway Token: RP_${Math.floor(Math.random() * 900000 + 100000)}`, 'success');
