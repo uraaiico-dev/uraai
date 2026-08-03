@@ -3687,3 +3687,20 @@ button:not(.loading) .spinner-inline {
   color: var(--ink-50);
   max-width: 400px;
 }
+
+/* ==================== UX POLISH: FEATURE LOCKING ==================== */
+.locked-feature {
+  opacity: 0.6;
+  position: relative;
+  transition: all 0.2s ease;
+}
+.locked-feature:hover {
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(91, 63, 217, 0.2);
+}
+.lock-icon {
+  margin-left: 8px;
+  font-size: 14px;
+  opacity: 0.8;
+}

@@ -200,6 +200,93 @@ function getCurrentLimits() {
   return PLAN_LIMITS[state.currentPlan] || PLAN_LIMITS.starter;
 }
 
+// --- PLAN ENFORCEMENT ---
+function getPlanLevel(planStr) {
+  if (planStr === 'max') return 3;
+  if (planStr === 'pro') return 2;
+  return 1; // starter
+}
+
+function requirePlan(minTier, featureName) {
+  const currentLevel = getPlanLevel(state.currentPlan);
+  const requiredLevel = getPlanLevel(minTier);
+  
+  if (currentLevel < requiredLevel) {
+    triggerNotification('🔒 Premium Feature', `Please upgrade to ${minTier.toUpperCase()} to use ${featureName}.`);
+    openPaymentModal(minTier);
+    return false;
+  }
+  return true;
+}
+
+function enforcePlanLimits() {
+  const isStarter = state.currentPlan === 'starter';
+  const isPro = state.currentPlan === 'pro';
+
+  // 1. Language Checkboxes
+  const proLangs = ['telugu', 'malayalam'];
+  const maxLangs = ['kannada', 'bengali', 'marathi'];
+  
+  proLangs.forEach(lang => {
+    const cb = document.getElementById(`prof-lang-${lang}`);
+    if (cb) {
+      cb.disabled = isStarter;
+      cb.parentElement.classList.toggle('locked-feature', isStarter);
+      if (isStarter) {
+        if (!cb.nextElementSibling.innerText.includes('🔒')) cb.nextElementSibling.innerHTML += ' <span class="lock-icon">🔒</span>';
+      } else {
+        cb.nextElementSibling.innerHTML = cb.nextElementSibling.innerHTML.replace(' <span class="lock-icon">🔒</span>', '');
+      }
+    }
+  });
+
+  maxLangs.forEach(lang => {
+    const cb = document.getElementById(`prof-lang-${lang}`);
+    if (cb) {
+      const isLocked = isStarter || isPro;
+      cb.disabled = isLocked;
+      cb.parentElement.classList.toggle('locked-feature', isLocked);
+      if (isLocked) {
+        if (!cb.nextElementSibling.innerText.includes('🔒')) cb.nextElementSibling.innerHTML += ' <span class="lock-icon">🔒</span>';
+      } else {
+        cb.nextElementSibling.innerHTML = cb.nextElementSibling.innerHTML.replace(' <span class="lock-icon">🔒</span>', '');
+      }
+    }
+  });
+
+  // 2. Export Button
+  const exportBtn = document.getElementById('btn-export-leads');
+  if (exportBtn) {
+    exportBtn.classList.toggle('locked-feature', isStarter);
+    if (isStarter && !exportBtn.innerHTML.includes('🔒')) exportBtn.innerHTML += ' <span class="lock-icon">🔒</span>';
+    if (!isStarter) exportBtn.innerHTML = exportBtn.innerHTML.replace(' <span class="lock-icon">🔒</span>', '');
+  }
+
+  // 3. Instagram & Email Buttons
+  const igBtn = document.getElementById('ig-connect-btn');
+  if (igBtn) {
+    igBtn.classList.toggle('locked-feature', isStarter);
+    if (isStarter && !igBtn.innerHTML.includes('🔒')) igBtn.innerHTML += ' <span class="lock-icon">🔒</span>';
+    if (!isStarter) igBtn.innerHTML = igBtn.innerHTML.replace(' <span class="lock-icon">🔒</span>', '');
+  }
+  
+  const emailBtn = document.getElementById('email-connect-btn');
+  if (emailBtn) {
+    emailBtn.classList.toggle('locked-feature', isStarter);
+    if (isStarter && !emailBtn.innerHTML.includes('🔒')) emailBtn.innerHTML += ' <span class="lock-icon">🔒</span>';
+    if (!isStarter) emailBtn.innerHTML = emailBtn.innerHTML.replace(' <span class="lock-icon">🔒</span>', '');
+  }
+
+  // 4. Broadcast Button
+  const broadcastBtn = document.getElementById('btn-send-broadcast');
+  if (broadcastBtn) {
+    broadcastBtn.classList.toggle('locked-feature', isStarter);
+    if (isStarter && !broadcastBtn.innerHTML.includes('🔒')) broadcastBtn.innerHTML += ' <span class="lock-icon">🔒</span>';
+    if (!isStarter) broadcastBtn.innerHTML = broadcastBtn.innerHTML.replace(' <span class="lock-icon">🔒</span>', '');
+  }
+}
+
+
 
 // --- LOGGING UTILITY ---
 function addLog(source, message, type = 'default') {
@@ -311,6 +398,7 @@ function bindNavbarListeners() {
 
 // --- INITIAL DATA SYNC ---
 function syncUI() {
+  enforcePlanLimits();
   applyPlanGatingToUI();
   // Global Header Actions State (Logged in or out)
   const navActions = document.getElementById('header-nav-actions');
@@ -1481,9 +1569,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnInvite = document.getElementById('btn-invite-team');
   if (btnInvite) {
     btnInvite.addEventListener('click', async () => {
+      if (!requirePlan('pro', 'Team Management')) return;
       const email = document.getElementById('team-invite-email').value.trim();
       const role = document.getElementById('team-invite-role').value;
-      if (!email) return alert('Enter an email address');
+      if (!email) return triggerNotification('Error', 'Enter an email address');
       btnInvite.innerText = 'Sending...';
       btnInvite.disabled = true;
       try {
@@ -2114,6 +2203,7 @@ async function initCRM() {
     const btnExport = document.getElementById('btn-export-leads');
     if (btnExport) {
       btnExport.onclick = async () => {
+        if (!requirePlan('pro', 'Lead Exporting (CSV)')) return;
         try {
           const exportLeads = await getLeadsCRM(state.userProfile.supabaseId);
           if (!exportLeads || exportLeads.length === 0) {
@@ -2156,6 +2246,7 @@ async function initBroadcasts() {
 }
 
 document.getElementById('btn-send-broadcast')?.addEventListener('click', async () => {
+  if (!requirePlan('pro', 'WhatsApp Broadcasts')) return;
   const select = document.getElementById('broadcast-recipients');
   const recipients = Array.from(select.selectedOptions).map(opt => opt.value);
   const message = document.getElementById('broadcast-message').value.trim();
@@ -2470,6 +2561,26 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', () => {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+    });
+  }
+});
+
+// Premium Channel Hooks
+document.addEventListener('DOMContentLoaded', () => {
+  const igBtn = document.getElementById('ig-connect-btn');
+  const emailBtn = document.getElementById('email-connect-btn');
+
+  if (igBtn) {
+    igBtn.addEventListener('click', () => {
+      if (!requirePlan('pro', 'Instagram Direct Connection')) return;
+      triggerNotification('Coming Soon', 'Instagram API approval is pending for this workspace.');
+    });
+  }
+
+  if (emailBtn) {
+    emailBtn.addEventListener('click', () => {
+      if (!requirePlan('pro', 'Email Connection')) return;
+      triggerNotification('Coming Soon', 'Email forwarding setup will be available next week.');
     });
   }
 });
