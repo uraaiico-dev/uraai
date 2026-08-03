@@ -155,11 +155,12 @@ const PLAN_LIMITS = {
     broadcastLimit: 0,
     leadScoring: false,
     multiStepFollowUp: false,
-    monthlyReport: false
+    monthlyReport: false,
+    removeWatermark: false
   },
   pro: {
     maxBots: 3,
-    maxRepliesPerMonth: Infinity,
+    maxRepliesPerMonth: 2000,
     maxFaqTemplates: Infinity,
     languages: ['tamil', 'hindi', 'english', 'telugu', 'malayalam'],
     channels: ['whatsapp', 'instagram', 'email'],
@@ -170,14 +171,15 @@ const PLAN_LIMITS = {
     autoFollowUp: true,
     bookingCalendar: true,
     leadExport: true,
-    broadcastLimit: 50,
+    broadcastLimit: 500,
     leadScoring: false,
     multiStepFollowUp: false,
-    monthlyReport: false
+    monthlyReport: false,
+    removeWatermark: true
   },
   max: {
     maxBots: Infinity,
-    maxRepliesPerMonth: Infinity,
+    maxRepliesPerMonth: 10000,
     maxFaqTemplates: Infinity,
     languages: ['tamil', 'hindi', 'english', 'telugu', 'malayalam', 'kannada', 'bengali', 'marathi'],
     channels: ['whatsapp', 'instagram', 'email'],
@@ -188,10 +190,11 @@ const PLAN_LIMITS = {
     autoFollowUp: true,
     bookingCalendar: true,
     leadExport: true,
-    broadcastLimit: Infinity,
+    broadcastLimit: 5000,
     leadScoring: true,
     multiStepFollowUp: true,
-    monthlyReport: true
+    monthlyReport: true,
+    removeWatermark: true
   }
 };
 
@@ -712,6 +715,8 @@ async function sendCustomerMessage(text) {
   waChatArea.scrollTop = waChatArea.scrollHeight;
 
   const useAI = document.getElementById('simulator-ai-toggle')?.checked;
+  const limits = getCurrentLimits();
+  const formatBotReply = (msg) => limits.removeWatermark ? msg : `${msg}\n\n_Powered by Uraai_`;
 
   if (useAI) {
     try {
@@ -719,7 +724,8 @@ async function sendCustomerMessage(text) {
       const res = await simulateChat(state.userProfile.supabaseId, text, "Simulator Tester");
       
       removeWATypingIndicator();
-      appendWAMessage('received', res.reply, true);
+      const finalReply = formatBotReply(res.reply);
+      appendWAMessage('received', finalReply, true);
       addLog('engine', `AI Edge Function reply received.`, 'success');
 
       if (res.bookingMade) {
@@ -735,7 +741,7 @@ async function sendCustomerMessage(text) {
   } else {
     setTimeout(() => {
       removeWATypingIndicator();
-      const replyText = processBotEngine(text);
+      const replyText = formatBotReply(processBotEngine(text));
       appendWAMessage('received', replyText, true);
       addLog('engine', `Outbound WhatsApp auto-reply sent.`, 'success');
 
