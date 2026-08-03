@@ -3597,7 +3597,7 @@ body.app-loading::after {
 }
 .toast {
   background: white;
-  color: var(--ink-80);
+  color: var(--ink);
   padding: 16px 20px;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);
@@ -3629,7 +3629,7 @@ body.app-loading::after {
 }
 .toast-msg {
   font-size: 13px;
-  color: var(--ink-50);
+  color: var(--ink-60);
 }
 
 /* ==================== UX POLISH: LOADING SPINNERS ==================== */
