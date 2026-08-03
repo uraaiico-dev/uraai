@@ -2590,3 +2590,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// Logout Execution Bridge
+window.executeLogout = function() {
+  const modal = document.getElementById('logout-confirm-modal');
+  if (modal) modal.classList.remove('active');
+  
+  if (typeof authLogOut === 'function') {
+    authLogOut();
+  } else {
+    console.error('authLogOut function is not defined.');
+  }
+};
