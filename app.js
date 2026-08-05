@@ -677,7 +677,7 @@ async function initiateRazorpayCheckout(tier) {
     triggerNotification('Processing', 'Generating secure checkout session...');
 
     // 1. Call our Supabase Edge Function to create an order
-    const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+    const { data, error } = await db.functions.invoke('create-razorpay-order', {
       body: { tier: tier, user_id: state.userProfile.supabaseId }
     });
     
