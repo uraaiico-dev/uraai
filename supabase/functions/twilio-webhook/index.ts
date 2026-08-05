@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 export const config = {
   auth: false,
@@ -8,8 +8,8 @@ export const config = {
 // ─── PLAN REPLY LIMITS ───
 const PLAN_LIMITS: Record<string, number> = {
   starter: 50,
-  pro: Infinity,
-  max: Infinity,
+  pro: 2000,
+  max: 10000,
 };
 
 serve(async (req) => {
@@ -90,7 +90,7 @@ serve(async (req) => {
     // ─── 3. Load user profile and FAQs ───
     const { data: user } = await supabase
       .from("users")
-      .select("id, business_name, plan, broadcast_count_this_month")
+      .select("id, business_name, plan, subscription_end_date, broadcast_count_this_month")
       .eq("id", botSettings.user_id)
       .single();
 
@@ -101,9 +101,18 @@ serve(async (req) => {
 
     userData = user;
     const business_name = userData?.business_name || "this business";
-    const plan = userData?.plan || "starter";
+    let plan = userData?.plan || "starter";
     const faqs = faqData || [];
     const user_id = botSettings.user_id;
+
+    // Check subscription expiration
+    if (userData?.subscription_end_date) {
+      const subEnd = new Date(userData.subscription_end_date);
+      if (new Date() > subEnd) {
+        console.log(`[EXPIRED] User ${user_id} subscription expired on ${subEnd.toISOString()}. Downgrading to starter limits.`);
+        plan = "starter";
+      }
+    }
 
     // ─── 4. Check reply usage limits ───
     const monthlyLimit = PLAN_LIMITS[plan] ?? 50;

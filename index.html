@@ -474,34 +474,109 @@
             </div>
           </div>
         </div>
-        <!-- Live Chat Inbox Screen -->
-        <div class="screen" id="inbox">
-          <div class="app-screen-header">
-            <h3>Live Inbox</h3>
-            <p>Monitor conversations and reply directly to customers.</p>
-          </div>
-          <div class="inbox-layout">
-            <div class="inbox-sidebar" id="inbox-contact-list">
-              <!-- Contacts will be populated here -->
-              <p style="padding:16px; color:var(--ink-40); font-size:14px;">Loading chats...</p>
-            </div>
-            <div class="inbox-main" id="inbox-chat-area" style="display:none;">
-              <div class="inbox-chat-header" id="inbox-active-contact">
-                <h4>Customer</h4>
+        <!-- Live Chat Inbox Screen (WhatsApp Web Clone) -->
+        <div class="screen" id="inbox" style="padding:0; height:100%; display:flex; flex-direction:column; background:#E3E1E0;">
+          <!-- Top green bar behind the interface (like WhatsApp Web desktop) -->
+          <div style="height: 127px; width: 100%; background-color: #00a884; position: absolute; top: 0; left: 0; z-index: 0;"></div>
+          
+          <div class="wa-clone-container" style="position: relative; z-index: 1; flex: 1; display: flex; max-width: 1600px; margin: 20px auto; width: 95%; background: #ffffff; box-shadow: 0 6px 18px rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; height: calc(100vh - 40px);">
+            
+            <!-- Left Sidebar -->
+            <div class="wa-clone-sidebar" style="width: 30%; min-width: 300px; border-right: 1px solid #e9edef; display: flex; flex-direction: column; background: #ffffff;">
+              <!-- Sidebar Header -->
+              <div class="wa-clone-header" style="height: 59px; background: #f0f2f5; display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e9edef;">
+                <div class="avatar" style="width: 40px; height: 40px; font-size: 16px;">S</div>
+                <div style="flex:1;"></div>
+                <div style="display:flex; gap: 20px; color: #54656f;">
+                  <span style="cursor:pointer;">💬</span>
+                  <span style="cursor:pointer;">⋮</span>
+                </div>
               </div>
-              <div class="inbox-chat-history" id="inbox-history">
-                <!-- Chat history -->
+              <!-- Search Bar -->
+              <div style="padding: 7px 14px; background: #ffffff; border-bottom: 1px solid #e9edef;">
+                <div style="background: #f0f2f5; border-radius: 8px; display: flex; align-items: center; padding: 0 12px; height: 35px;">
+                  <span style="color: #54656f; font-size: 14px;">🔍</span>
+                  <input type="text" placeholder="Search or start new chat" style="border:none; background:transparent; margin-left: 14px; outline:none; width:100%; font-size: 14px; color: #111b21;">
+                </div>
               </div>
-              <div class="inbox-reply-box">
-                <input type="text" id="inbox-reply-input" placeholder="Type your message..." />
-                <button class="btn-primary" id="btn-inbox-send">Send</button>
+              <!-- Contacts List -->
+              <div id="inbox-contact-list" style="flex: 1; overflow-y: auto;">
+                <!-- Sample Contact -->
+                <div class="wa-contact-item" style="display: flex; align-items: center; padding: 0 12px; cursor: pointer; transition: background 0.2s;">
+                  <div class="avatar" style="width: 49px; height: 49px; background: #dfe5e7; margin-right: 15px; flex-shrink: 0;"></div>
+                  <div style="flex: 1; border-bottom: 1px solid #f2f2f2; padding: 12px 0; display:flex; flex-direction:column; justify-content:center;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span style="font-size: 17px; color: #111b21;">+91 98765 43210</span>
+                      <span style="font-size: 12px; color: #667781;">12:45 PM</span>
+                    </div>
+                    <div style="font-size: 14px; color: #667781; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
+                      Hi, I need an appointment today.
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="inbox-empty-state" id="inbox-empty" style="display:flex; flex:1; align-items:center; justify-content:center; color:var(--ink-40);">
-              Select a conversation to start messaging
+
+            <!-- Right Chat Area -->
+            <div class="wa-clone-main" id="inbox-chat-area" style="flex: 1; display: flex; flex-direction: column; background: #efeae2; position: relative; overflow:hidden;">
+              <!-- Background doodle pattern -->
+              <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.06; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); z-index:0; pointer-events:none;"></div>
+              
+              <!-- Chat Header -->
+              <div class="wa-clone-header" style="height: 59px; background: #f0f2f5; display: flex; align-items: center; padding: 10px 16px; border-left: 1px solid #d1d7db; position:relative; z-index:1;">
+                <div class="avatar" style="width: 40px; height: 40px; background: #dfe5e7; margin-right: 15px;"></div>
+                <div style="flex:1;">
+                  <div style="font-size: 16px; color: #111b21;" id="inbox-active-contact">+91 98765 43210</div>
+                  <div style="font-size: 13px; color: #667781;">click here for contact info</div>
+                </div>
+                <div style="display:flex; gap: 20px; color: #54656f;">
+                  <span style="cursor:pointer;">🔍</span>
+                  <span style="cursor:pointer;">⋮</span>
+                </div>
+              </div>
+              
+              <!-- Chat History -->
+              <div class="wa-clone-history" id="inbox-history" style="flex: 1; padding: 20px 6%; overflow-y: auto; position:relative; z-index:1; display:flex; flex-direction:column; gap:10px;">
+                <!-- Sample Bubbles -->
+                <div style="align-self: center; background: white; padding: 5px 12px; border-radius: 8px; font-size: 12px; color: #54656f; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); margin-bottom: 10px;">TODAY</div>
+                
+                <div class="wa-bubble-received" style="align-self: flex-start; background: #ffffff; padding: 6px 7px 8px 9px; border-radius: 0 8px 8px 8px; max-width: 65%; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); position: relative; font-size: 14.2px; color: #111b21;">
+                  Hi, I need an appointment today.
+                  <span style="float: right; font-size: 11px; color: #667781; margin: 10px 0 -5px 10px;">12:45 PM</span>
+                </div>
+                
+                <div class="wa-bubble-sent" style="align-self: flex-end; background: #d9fdd3; padding: 6px 7px 8px 9px; border-radius: 8px 0 8px 8px; max-width: 65%; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); position: relative; font-size: 14.2px; color: #111b21;">
+                  Sure! What time works for you?
+                  <span style="float: right; font-size: 11px; color: #667781; margin: 10px 0 -5px 10px; display:flex; align-items:center; gap:3px;">
+                    12:46 PM 
+                    <svg viewBox="0 0 16 15" width="16" height="15"><path fill="#53bdeb" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"></path></svg>
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Reply Input Area -->
+              <div class="wa-clone-footer" style="height: 62px; background: #f0f2f5; display: flex; align-items: center; padding: 5px 16px; position:relative; z-index:1; gap: 16px;">
+                <span style="color: #54656f; font-size: 24px; cursor:pointer;">😀</span>
+                <span style="color: #54656f; font-size: 24px; cursor:pointer;">📎</span>
+                <div style="flex: 1; background: #ffffff; border-radius: 8px; padding: 9px 12px; display:flex; align-items:center;">
+                  <input type="text" id="inbox-reply-input" placeholder="Type a message" style="width: 100%; border: none; outline: none; font-size: 15px; color: #111b21;">
+                </div>
+                <span style="color: #54656f; font-size: 24px; cursor:pointer;" id="btn-inbox-send">🎙️</span>
+              </div>
             </div>
+
+            <!-- Empty State -->
+            <div class="wa-clone-empty" id="inbox-empty" style="display:none; flex: 1; background: #f0f2f5; border-left: 1px solid #e9edef; flex-direction: column; align-items: center; justify-content: center; border-bottom: 6px solid #43c5a5;">
+              <h1 style="font-size: 32px; font-weight: 300; color: #41525d; margin-top: 28px;">WhatsApp Web</h1>
+              <div style="font-size: 14px; color: #667781; margin-top: 18px; text-align: center; line-height: 20px;">Send and receive messages without keeping your phone online.<br>Use WhatsApp on up to 4 linked devices and 1 phone at the same time.</div>
+              <div style="margin-top: 40px; display: flex; align-items: center; gap: 4px; font-size: 14px; color: #8696a0;">
+                🔒 End-to-end encrypted
+              </div>
+            </div>
+            
           </div>
         </div>
+
 
         <!-- CRM & Bookings Screen -->
         <div class="screen" id="crm">

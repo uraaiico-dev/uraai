@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
@@ -32,6 +32,45 @@ serve(async (req) => {
     if (!botSettings || !botSettings.wa_phone_number) {
       return new Response(JSON.stringify({ error: "No active WhatsApp number configured for this user." }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // Load user limits
+    const { data: user } = await supabase
+      .from("users")
+      .select("plan, subscription_end_date, broadcast_count_this_month, broadcast_reset_date")
+      .eq("id", userId)
+      .single();
+
+    let plan = user?.plan || "starter";
+    
+    // Check subscription expiration
+    if (user?.subscription_end_date) {
+      const subEnd = new Date(user.subscription_end_date);
+      if (new Date() > subEnd) {
+        plan = "starter";
+      }
+    }
+
+    const BROADCAST_LIMITS: Record<string, number> = {
+      starter: 0,
+      pro: 500,
+      max: 5000,
+    };
+    
+    const limit = BROADCAST_LIMITS[plan] ?? 0;
+    let currentCount = user?.broadcast_count_this_month || 0;
+    const resetDate = user?.broadcast_reset_date;
+    const today = new Date().toISOString().split("T")[0];
+
+    if (resetDate && resetDate < today.substring(0, 7) + "-01") {
+      currentCount = 0;
+    }
+
+    if (currentCount + recipients.length > limit) {
+      return new Response(JSON.stringify({ error: `Broadcast limit exceeded. Your ${plan} plan allows ${limit} messages/month. You have ${limit - currentCount} remaining.` }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
@@ -83,6 +122,16 @@ serve(async (req) => {
         console.error("Broadcast failed for", to, err);
         failCount++;
       }
+    }
+
+    if (successCount > 0) {
+      await supabase
+        .from('users')
+        .update({
+          broadcast_count_this_month: currentCount + successCount,
+          broadcast_reset_date: today
+        })
+        .eq('id', userId);
     }
 
     return new Response(JSON.stringify({ success: true, successCount, failCount }), {

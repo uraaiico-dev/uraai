@@ -46,7 +46,10 @@ serve(async (req) => {
       body: JSON.stringify({
         amount: amountInPaise,
         currency: "INR",
-        receipt: `receipt_${user_id}_${Date.now()}`
+        receipt: `rcpt_${Date.now().toString().slice(-8)}`,
+        notes: {
+          user_id: user_id
+        }
       })
     });
 
@@ -70,7 +73,7 @@ serve(async (req) => {
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 200,
     });
   }
 });

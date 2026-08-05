@@ -682,6 +682,7 @@ async function initiateRazorpayCheckout(tier) {
     });
     
     if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
     if (!data || !data.order_id) throw new Error("Failed to create order");
 
     // 2. Initialize Razorpay Checkout
@@ -692,11 +693,30 @@ async function initiateRazorpayCheckout(tier) {
       name: "Uraai AI",
       description: `Upgrade to ${tier.toUpperCase()} Plan`,
       order_id: data.order_id,
-      handler: function (response) {
-        triggerNotification("✅ Payment Successful", "Your plan is being upgraded...");
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
+      handler: async function (response) {
+        triggerNotification("Processing", "Verifying payment...");
+        try {
+          const { data: vData, error: vError } = await db.functions.invoke('verify-razorpay-payment', {
+            body: {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              tier: tier,
+              user_id: state.userProfile.supabaseId
+            }
+          });
+          
+          if (vError) throw vError;
+          if (vData && vData.error) throw new Error(vData.error);
+          
+          triggerNotification("✅ Payment Successful", "Your plan has been upgraded!");
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } catch (err) {
+          console.error("Verification error:", err);
+          triggerNotification("Verification Failed", err.message);
+        }
       },
       prefill: {
         name: state.userProfile.fullName,
@@ -1037,7 +1057,15 @@ async function handleLogInSubmit() {
     state.userProfile.businessName = profile.business_name;
     state.userProfile.businessType = profile.business_type;
     state.userProfile.teamRole = profile.team_role || 'admin';
-    state.currentPlan = profile.plan || 'starter';
+    
+    let activePlan = profile.plan || 'starter';
+    if (profile.subscription_end_date) {
+      const subEnd = new Date(profile.subscription_end_date);
+      if (new Date() > subEnd) {
+        activePlan = 'starter';
+      }
+    }
+    state.currentPlan = activePlan;
 
     if (botSettings) {
       state.welcomeMessage = botSettings.welcome_message;
@@ -1323,7 +1351,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       state.userProfile.email = profile.email;
       state.userProfile.businessName = profile.business_name;
       state.userProfile.businessType = profile.business_type;
-      state.currentPlan = profile.plan || 'starter';
+      
+      let activePlan = profile.plan || 'starter';
+      if (profile.subscription_end_date) {
+        const subEnd = new Date(profile.subscription_end_date);
+        if (new Date() > subEnd) {
+          activePlan = 'starter';
+        }
+      }
+      state.currentPlan = activePlan;
 
       if (botSettings) {
         state.welcomeMessage = botSettings.welcome_message;

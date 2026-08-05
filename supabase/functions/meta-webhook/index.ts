@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 export const config = {
   auth: false,
@@ -7,8 +7,8 @@ export const config = {
 
 const PLAN_LIMITS: Record<string, number> = {
   starter: 50,
-  pro: Infinity,
-  max: Infinity,
+  pro: 2000,
+  max: 10000,
 };
 
 serve(async (req) => {
@@ -45,12 +45,13 @@ serve(async (req) => {
     const value = body.entry[0].changes[0].value;
     const messageObj = value.messages[0];
     
-    // Only handle text messages for now
-    if (messageObj.type !== 'text') {
+    // Only handle text and interactive messages
+    if (messageObj.type !== 'text' && messageObj.type !== 'interactive') {
       return new Response("OK", { status: 200 });
     }
 
-    const customerMessage = messageObj.text.body;
+    const isInteractive = messageObj.type === 'interactive';
+    const customerMessage = isInteractive ? messageObj.interactive?.button_reply?.title : messageObj.text?.body;
     const fromNumber = messageObj.from;
     const toNumber = value.metadata.display_phone_number;
     const phoneNumberId = value.metadata.phone_number_id;
@@ -80,7 +81,7 @@ serve(async (req) => {
     // ─── 4. Load user profile and FAQs ───
     const { data: user } = await supabase
       .from("users")
-      .select("id, business_name, plan, broadcast_count_this_month")
+      .select("id, business_name, plan, subscription_end_date, broadcast_count_this_month, wa_phone_number")
       .eq("id", botSettings.user_id)
       .single();
 
@@ -90,9 +91,43 @@ serve(async (req) => {
       .eq("user_id", botSettings.user_id);
 
     const business_name = user?.business_name || "this business";
-    const plan = user?.plan || "starter";
+    let plan = user?.plan || "starter";
     const faqs = faqData || [];
     const user_id = botSettings.user_id;
+
+    // Check subscription expiration
+    if (user?.subscription_end_date) {
+      const subEnd = new Date(user.subscription_end_date);
+      if (new Date() > subEnd) {
+        console.log(`[EXPIRED] User ${user_id} subscription expired on ${subEnd.toISOString()}. Downgrading to starter limits.`);
+        plan = "starter";
+      }
+    }
+
+    // ─── 4b. Handle Interactive Approvals ───
+    if (isInteractive) {
+      const btnReply = messageObj.interactive.button_reply;
+      if (btnReply && (btnReply.id.startsWith('approve_') || btnReply.id.startsWith('decline_'))) {
+        const action = btnReply.id.split('_')[0]; // 'approve' or 'decline'
+        const appointmentId = btnReply.id.split('_')[1];
+
+        const status = action === 'approve' ? 'accepted' : 'declined';
+        await supabase.from('appointments').update({ status }).eq('id', appointmentId);
+        
+        // Fetch appointment to notify customer
+        const { data: appt } = await supabase.from('appointments').select('*').eq('id', appointmentId).single();
+        if (appt) {
+            const customerMsg = action === 'approve' 
+                ? `Great news! Your appointment for ${appt.service} on ${appt.appointment_date} has been confirmed.`
+                : `Sorry, we are unable to confirm your appointment for ${appt.service} on ${appt.appointment_date}. Please let us know if you'd like to reschedule.`;
+            await sendMetaMessage(appt.customer_phone, phoneNumberId, botSettings.meta_access_token, customerMsg);
+        }
+        
+        // Notify owner
+        await sendMetaMessage(fromNumber, phoneNumberId, botSettings.meta_access_token, `You have ${status} the appointment.`);
+        return new Response("OK", { status: 200 });
+      }
+    }
 
     // ─── 5. Check reply usage limits ───
     const monthlyLimit = PLAN_LIMITS[plan] ?? 50;
@@ -191,12 +226,21 @@ YOUR ADVANCED RULES:
       const bService = bookingMatch[3];
       replyMessage = replyMessage.replace(bookingMatch[0], '').trim();
       
-      await supabase.from('appointments').insert({
+      const { data: newAppt } = await supabase.from('appointments').insert({
         user_id: user_id,
         customer_phone: fromNumber,
         service: bService,
-        appointment_date: `${bDate} ${bTime}`
-      });
+        appointment_date: `${bDate} ${bTime}`,
+        status: 'pending'
+      }).select().single();
+
+      replyMessage += `\n\nI have requested this time for you. Please wait while the business owner confirms your appointment.`;
+
+      // Send Interactive Message to Owner
+      const ownerPhone = user?.wa_phone_number;
+      if (ownerPhone && newAppt) {
+        await sendInteractiveBookingMessage(ownerPhone, phoneNumberId, botSettings.meta_access_token, newAppt.id, bService, `${bDate} ${bTime}`, fromNumber);
+      }
     }
 
     // ─── 8. Send reply via Meta Graph API ───
@@ -270,6 +314,56 @@ async function sendMetaMessage(to: string, phoneNumberId: string, accessToken: s
 
   if (!response.ok) {
     console.error("[META] Error sending:", await response.text());
+  }
+  return response.ok;
+}
+
+// ─── HELPER: Send Interactive Booking Message ───
+async function sendInteractiveBookingMessage(to: string, phoneNumberId: string, accessToken: string, appointmentId: string, service: string, dateTime: string, customerPhone: string): Promise<boolean> {
+  const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
+  
+  const payload = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: to,
+    type: "interactive",
+    interactive: {
+      type: "button",
+      body: {
+        text: `📅 *New Booking Request*\n\nCustomer: ${customerPhone}\nService: ${service}\nTime: ${dateTime}\n\nDo you want to accept this appointment?`
+      },
+      action: {
+        buttons: [
+          {
+            type: "reply",
+            reply: {
+              id: `approve_${appointmentId}`,
+              title: "✅ Accept"
+            }
+          },
+          {
+            type: "reply",
+            reply: {
+              id: `decline_${appointmentId}`,
+              title: "❌ Decline"
+            }
+          }
+        ]
+      }
+    }
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    console.error("[META] Error sending interactive:", await response.text());
   }
   return response.ok;
 }

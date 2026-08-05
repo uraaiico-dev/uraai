@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,13 +29,12 @@ serve(async (req) => {
       
       const paymentEntity = payload.payload.payment.entity;
       
-      // We stored user_id in the receipt field during order creation: `receipt_${user_id}_${Date.now()}`
-      // Or we can extract it from notes if we passed it. We used receipt.
-      const receipt = paymentEntity.notes?.receipt || payload.payload.order?.entity?.receipt || "";
-      const user_id = receipt.split('_')[1];
+      // Extract user_id from notes
+      const orderEntity = payload.payload.order?.entity || {};
+      const user_id = paymentEntity.notes?.user_id || orderEntity.notes?.user_id;
 
       if (!user_id) {
-        throw new Error("Could not extract user_id from receipt");
+        throw new Error("Could not extract user_id from notes");
       }
 
       // Determine plan based on amount paid (amount is in paise)
