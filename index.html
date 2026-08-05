@@ -692,33 +692,7 @@
                   <button class="btn-primary" id="btn-add-menu-item" style="padding: 10px 16px; border-radius: 8px;">Add</button>
                 </div>
               </div>
-              
-              <hr style="margin:24px 0; border-color:var(--ink-10);">
-              
-              <div class="form-block">
-                <label style="display:flex; align-items:center; gap:8px;">
-                  <span>Connect Official Meta WhatsApp (Cloud API)</span>
-                  <span style="background:var(--green); color:white; padding:2px 6px; border-radius:4px; font-size:10px;">PRO</span>
-                </label>
-                <p style="font-size:12px; color:var(--ink-40); margin-bottom:12px;">Link your real WhatsApp Business account to move out of the Twilio Sandbox.</p>
-                <div class="field-row" style="margin-bottom:12px;">
-                  <div>
-                    <label>WhatsApp Business Account ID</label>
-                    <input class="field" id="meta-waba-id" placeholder="e.g. 10459345...">
-                  </div>
-                  <div>
-                    <label>Phone Number ID</label>
-                    <input class="field" id="meta-phone-id" placeholder="e.g. 1098493...">
-                  </div>
-                </div>
-                <div class="field-row">
-                  <div style="flex:1;">
-                    <label>Permanent Access Token</label>
-                    <input class="field" type="password" id="meta-access-token" placeholder="EAA...">
-                  </div>
-                </div>
-              </div>
-
+              <!-- Connect Official Meta WhatsApp (Cloud API) is handled via Embedded Signup in the Dashboard -->
 
               <div class="save-bar" style="border:none; padding:0; background:transparent;">
                 <button class="save-bar-btn" id="save-changes-btn">
@@ -789,22 +763,6 @@
                       </button>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <!-- diagnostics console -->
-              <div class="console-panel">
-                <div class="console-header">
-                  <div class="console-pulse"></div>
-                  <div class="console-title">Uraai Diagnostics Engine</div>
-                  <div class="console-desc">Real-time triggers and action logs.</div>
-                </div>
-                <div class="console-body" id="console-body">
-                  <!-- logs -->
-                </div>
-                <div class="console-actions-row">
-                  <button class="btn-console-action" onclick="simulateIncomingMessage()">💬 Simulator Msg</button>
-                  <button class="btn-console-action" onclick="triggerNotification('📢 System Alert', 'Uraai cloud webhooks connected. Delay under 20ms.')">⚡ Test Status</button>
                 </div>
               </div>
             </div>
