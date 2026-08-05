@@ -1,14 +1,12 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Add cors headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -23,12 +21,11 @@ serve(async (req) => {
       });
     }
 
-    // Initialize Supabase Client (using service key for admin privileges)
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Verify user and get plan details
+    // 1. Verify user, get plan details AND bot settings (for Meta tokens)
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("plan, broadcast_count_this_month")
@@ -38,6 +35,19 @@ serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "User not found" }), { 
         status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { data: botSettings, error: botError } = await supabase
+      .from("bot_settings")
+      .select("meta_phone_id, meta_access_token, wa_phone_number")
+      .eq("user_id", user_id)
+      .single();
+
+    if (botError || !botSettings || !botSettings.meta_phone_id || !botSettings.meta_access_token) {
+      return new Response(JSON.stringify({ error: "Meta WhatsApp not configured for this user" }), { 
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -57,33 +67,37 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-    // Max plan has no limits
 
-    // 3. Send message via Twilio API
-    const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const fromNumber = Deno.env.get("TWILIO_SANDBOX_NUMBER"); // Usually whatsapp:+14155238886
+    // 3. Send message via Meta Graph API
+    const phoneNumberId = botSettings.meta_phone_id;
+    const accessToken = botSettings.meta_access_token;
+    
+    // Clean to_number in case it has whatsapp: prefix
+    const cleanToNumber = to_number.replace("whatsapp:", "").trim();
 
-    const twilioData = new URLSearchParams();
-    twilioData.append("To", to_number);
-    twilioData.append("From", fromNumber || "whatsapp:+14155238886");
-    twilioData.append("Body", message_body);
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: cleanToNumber,
+      type: "text",
+      text: { body: message_body }
+    };
 
-    const twilioResponse = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+    const metaResponse = await fetch(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: "Basic " + btoa(`${accountSid}:${authToken}`),
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
-        body: twilioData,
+        body: JSON.stringify(payload),
       }
     );
 
-    if (!twilioResponse.ok) {
-      const errorText = await twilioResponse.text();
-      console.error("Twilio Error:", errorText);
+    if (!metaResponse.ok) {
+      const errorText = await metaResponse.text();
+      console.error("Meta Error:", errorText);
       return new Response(JSON.stringify({ error: "Failed to send WhatsApp message" }), { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -94,10 +108,10 @@ serve(async (req) => {
     await supabase.from("whatsapp_logs").insert({
       user_id: user_id,
       direction: "outbound",
-      from_number: fromNumber,
-      to_number: to_number,
+      from_number: botSettings.wa_phone_number || phoneNumberId,
+      to_number: cleanToNumber,
       message_body: message_body,
-      status: "replied", // or 'sent'
+      status: "replied", 
     });
 
     // 5. Increment broadcast_count_this_month

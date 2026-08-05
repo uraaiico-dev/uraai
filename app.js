@@ -20,7 +20,8 @@ const state = {
     avgResponse: 2.1,
     satisfaction: 98,
     missedChats: 0,
-    activeBots: 1
+    activeBots: 1,
+    repliesThisMonth: 0
   },
   analyticsSegment: 'week', // today, week, month
   
@@ -478,6 +479,16 @@ function syncUI() {
   document.getElementById('stat-missed').innerText = state.stats.missedChats;
   document.getElementById('stat-bots-active').innerText = state.stats.activeBots;
 
+  // Limit Notification Bar Logic
+  const limitBar = document.getElementById('limit-notification-bar');
+  if (limitBar) {
+    if (state.currentPlan === 'starter' && state.stats.repliesThisMonth >= 50) {
+      limitBar.style.display = 'flex';
+    } else {
+      limitBar.style.display = 'none';
+    }
+  }
+
   // Render active channels on dashboard
   updateWhatsAppChannelCard(state.channels.whatsapp);
 
@@ -642,15 +653,8 @@ let selectedUpgradeTier = 'pro';
 
 function openPaymentModal(tier) {
   selectedUpgradeTier = tier;
-  const modal = document.getElementById('payment-modal');
-  const summaryText = document.getElementById('payment-package-summary');
 
-  // Set checkout summary text
-  if (tier === 'pro') {
-    summaryText.innerText = 'Pro Subscription Plan — ₹1,999/month';
-  } else if (tier === 'max') {
-    summaryText.innerText = 'Max Subscription Plan — ₹3,999/month';
-  } else if (tier === 'starter') {
+  if (tier === 'starter') {
     // Starter downgrade triggers instantly
     state.currentPlan = 'starter';
     state.languages = ['english'];
@@ -661,12 +665,59 @@ function openPaymentModal(tier) {
     return;
   }
 
-  // Clear modal panels
-  document.getElementById('payment-inputs-panel').style.display = 'block';
-  document.getElementById('payment-loading-panel').style.display = 'none';
-  document.getElementById('payment-success-panel').style.display = 'none';
+  // Directly initialize real Razorpay flow instead of the mock HTML modal
+  initiateRazorpayCheckout(tier);
+}
 
-  modal.classList.add('active');
+async function initiateRazorpayCheckout(tier) {
+  try {
+    if (!state.userProfile.supabaseId) throw new Error("Not logged in");
+
+    // Show processing notification while we generate the order ID
+    triggerNotification('Processing', 'Generating secure checkout session...');
+
+    // 1. Call our Supabase Edge Function to create an order
+    const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+      body: { tier: tier, user_id: state.userProfile.supabaseId }
+    });
+    
+    if (error) throw error;
+    if (!data || !data.order_id) throw new Error("Failed to create order");
+
+    // 2. Initialize Razorpay Checkout
+    const options = {
+      key: "rzp_test_TM2yt4p5jRcL6A",
+      amount: data.amount,
+      currency: "INR",
+      name: "Uraai AI",
+      description: `Upgrade to ${tier.toUpperCase()} Plan`,
+      order_id: data.order_id,
+      handler: function (response) {
+        triggerNotification("✅ Payment Successful", "Your plan is being upgraded...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      },
+      prefill: {
+        name: state.userProfile.fullName,
+        email: state.userProfile.email,
+        contact: state.userProfile.phone
+      },
+      theme: {
+        color: "#5B3FD9"
+      }
+    };
+    
+    const rzp = new window.Razorpay(options);
+    rzp.on('payment.failed', function (response){
+      triggerNotification("Payment Failed", response.error.description);
+    });
+    rzp.open();
+    
+  } catch(err) {
+    console.error(err);
+    triggerNotification("Checkout Error", err.message);
+  }
 }
 
 function closePaymentModal() {
@@ -1000,6 +1051,7 @@ async function handleLogInSubmit() {
       state.userProfile.metaWabaId = botSettings.meta_waba_id || '';
       state.userProfile.metaPhoneId = botSettings.meta_phone_id || '';
       state.userProfile.metaAccessToken = botSettings.meta_access_token || '';
+      state.stats.repliesThisMonth = botSettings.reply_count_this_month || 0;
     }
 
     if (!botSettings || !botSettings.welcome_message) {
@@ -1281,6 +1333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.businessKnowledge = botSettings.business_knowledge || '';
         menuItemsData = botSettings.menu_items || [];
         renderMenuItems();
+        state.stats.repliesThisMonth = botSettings.reply_count_this_month || 0;
       }
 
 
@@ -1772,12 +1825,7 @@ function launchFacebookEmbeddedSignup() {
       showWhatsAppSetupError('Connection cancelled. Please try again.');
     }
   }, {
-    scope: 'whatsapp_business_management,whatsapp_business_messaging',
-    extras: {
-      setup: {},
-      featureType: 'whatsapp_embedded_signup',
-      sessionInfoVersion: '3',
-    }
+    config_id: '4551130871834024'
   });
 }
 
@@ -1796,17 +1844,19 @@ async function handleEmbeddedSignupSuccess(accessToken) {
   `;
 
   try {
-    // Save access token to Supabase
+    // Exchange token and save Meta credentials via Edge Function
     if (state.userProfile.supabaseId) {
-      const { error } = await db
-        .from('users')
-        .update({
-          wa_access_token: accessToken,
-          wa_connected: true,
-        })
-        .eq('id', state.userProfile.supabaseId);
+      const { data, error } = await db.functions.invoke('exchange-meta-token', {
+        body: { 
+          access_token: accessToken,
+          user_id: state.userProfile.supabaseId
+        }
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error exchanging Meta token:', error);
+        throw error;
+      }
     }
 
     // Update local state
@@ -2611,3 +2661,4 @@ window.executeLogout = async function() {
     window.location.reload();
   }
 };
+
