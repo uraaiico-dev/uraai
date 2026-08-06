@@ -534,7 +534,11 @@
                   <div style="font-size: 16px; color: #111b21;" id="inbox-active-contact">+91 98765 43210</div>
                   <div style="font-size: 13px; color: #667781;">click here for contact info</div>
                 </div>
-                <div style="display:flex; gap: 20px; color: #54656f;">
+                <div style="display:flex; align-items:center; gap: 20px; color: #54656f;">
+                  <!-- AI Pause Toggle -->
+                  <div style="display:flex; align-items:center; gap: 6px; background: #e9edef; padding: 4px 10px; border-radius: 12px; cursor:pointer;" id="btn-toggle-ai" title="Pause AI to reply manually">
+                    <span style="font-size:12px; font-weight:600;" id="ai-toggle-label">🤖 AI: ON</span>
+                  </div>
                   <span style="cursor:pointer;">🔍</span>
                   <span style="cursor:pointer;">⋮</span>
                 </div>
@@ -564,7 +568,7 @@
                 <span style="color: #54656f; font-size: 24px; cursor:pointer;">😀</span>
                 <span style="color: #54656f; font-size: 24px; cursor:pointer;">📎</span>
                 <div style="flex: 1; background: #ffffff; border-radius: 8px; padding: 9px 12px; display:flex; align-items:center;">
-                  <input type="text" id="inbox-reply-input" placeholder="Type a message" style="width: 100%; border: none; outline: none; font-size: 15px; color: #111b21;">
+                  <input type="text" id="inbox-reply-input" placeholder="Pause AI to type manually" style="width: 100%; border: none; outline: none; font-size: 15px; color: #111b21;" disabled>
                 </div>
                 <span style="color: #54656f; font-size: 24px; cursor:pointer;" id="btn-inbox-send">🎙️</span>
               </div>
