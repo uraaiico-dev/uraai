@@ -161,7 +161,7 @@ const PLAN_LIMITS = {
   },
   pro: {
     maxBots: 3,
-    maxRepliesPerMonth: 2000,
+    maxRepliesPerMonth: 5000,
     maxFaqTemplates: Infinity,
     languages: ['tamil', 'hindi', 'english', 'telugu', 'malayalam'],
     channels: ['whatsapp', 'instagram', 'email'],
@@ -180,7 +180,7 @@ const PLAN_LIMITS = {
   },
   max: {
     maxBots: Infinity,
-    maxRepliesPerMonth: 10000,
+    maxRepliesPerMonth: 25000,
     maxFaqTemplates: Infinity,
     languages: ['tamil', 'hindi', 'english', 'telugu', 'malayalam', 'kannada', 'bengali', 'marathi'],
     channels: ['whatsapp', 'instagram', 'email'],
@@ -1667,6 +1667,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnInvite) {
     btnInvite.addEventListener('click', async () => {
       if (!requirePlan('pro', 'Team Management')) return;
+      const currentMembers = (await getTeamMembers(state.userProfile.supabaseId)) || [];
+      if (!canAddTeamMember(currentMembers.length)) return;
       const email = document.getElementById('team-invite-email').value.trim();
       const role = document.getElementById('team-invite-role').value;
       if (!email) return triggerNotification('Error', 'Enter an email address');
@@ -2811,13 +2813,21 @@ async function loadInboxChat(lead) {
   }
   
   try {
-    // Fetch whatsapp_logs for this phone number
-    const { data: logs, error } = await supabase
+    // Fetch whatsapp_logs for this phone number (enforcing plan history limits)
+    let query = supabase
       .from('whatsapp_logs')
       .select('*')
       .eq('user_id', currentUser.id)
-      .or(`from_number.eq.${lead.customer_phone},to_number.eq.${lead.customer_phone}`)
-      .order('created_at', { ascending: true });
+      .or(`from_number.eq.${lead.customer_phone},to_number.eq.${lead.customer_phone}`);
+
+    const limits = getCurrentLimits();
+    if (limits.replyHistoryDays && limits.replyHistoryDays !== Infinity) {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - limits.replyHistoryDays);
+      query = query.gte('created_at', cutoffDate.toISOString());
+    }
+
+    const { data: logs, error } = await query.order('created_at', { ascending: true });
       
     if (error) throw error;
     

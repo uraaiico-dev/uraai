@@ -28,7 +28,7 @@ serve(async (req) => {
     // 1. Verify user, get plan details AND bot settings (for Meta tokens)
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("plan, broadcast_count_this_month")
+      .select("plan, subscription_end_date, broadcast_count_this_month")
       .eq("id", user_id)
       .single();
 
@@ -52,17 +52,31 @@ serve(async (req) => {
       });
     }
 
-    // 2. Check plan limits
-    const plan = user.plan || "starter";
+    // 2. Check plan limits & subscription expiration
+    let plan = user.plan || "starter";
+    if (user.subscription_end_date) {
+      const subEnd = new Date(user.subscription_end_date);
+      if (new Date() > subEnd) {
+        plan = "starter";
+      }
+    }
+
+    const BROADCAST_LIMITS: Record<string, number> = {
+      starter: 0,
+      pro: 500,
+      max: 5000,
+    };
+
+    const limit = BROADCAST_LIMITS[plan] ?? 0;
     const broadcastCount = user.broadcast_count_this_month || 0;
 
-    if (plan === "starter") {
+    if (plan === "starter" || limit === 0) {
       return new Response(JSON.stringify({ error: "Broadcasts not allowed on Starter plan" }), { 
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
-    } else if (plan === "pro" && broadcastCount >= 50) {
-      return new Response(JSON.stringify({ error: "Pro plan broadcast limit (50) reached for this month" }), { 
+    } else if (broadcastCount >= limit) {
+      return new Response(JSON.stringify({ error: `Your ${plan.toUpperCase()} plan broadcast limit (${limit}) reached for this month` }), { 
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
