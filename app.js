@@ -2770,9 +2770,9 @@ function renderInboxContacts(leads) {
       <div style="flex: 1; border-bottom: 1px solid #f2f2f2; padding: 12px 0; display:flex; flex-direction:column; justify-content:center;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-size: 17px; color: #111b21;">${nameStr}</span>
-          <span style="font-size: 12px; color: #667781;">${timeStr}</span>
+          <span style="font-size: 12px; color: #8C7DE6;">${timeStr}</span>
         </div>
-        <div style="font-size: 14px; color: #667781; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
+        <div style="font-size: 14px; color: #8C7DE6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
           Click to view messages...
         </div>
       </div>
@@ -2855,16 +2855,16 @@ function appendMessageBubble(log) {
   bubble.className = isOutbound ? 'wa-bubble-sent' : 'wa-bubble-received';
   
   if (isOutbound) {
-    bubble.style = 'align-self: flex-end; background: #d9fdd3; padding: 6px 7px 8px 9px; border-radius: 8px 0 8px 8px; max-width: 65%; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); position: relative; font-size: 14.2px; color: #111b21; margin-bottom: 4px;';
+    bubble.style = 'align-self: flex-end; background: #F0EEFF; padding: 8px 12px; border-radius: 12px 12px 0 12px; max-width: 65%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; font-size: 14.2px; color: #5B3FD9; margin-bottom: 6px;';
     
     // Read receipts SVG
     const ticksSvg = log.status === 'read' 
-      ? '<svg viewBox="0 0 16 15" width="16" height="15"><path fill="#53bdeb" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"></path></svg>'
-      : '<svg viewBox="0 0 16 15" width="16" height="15"><path fill="#8696a0" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512z"></path></svg>';
+      ? '<svg viewBox="0 0 16 15" width="16" height="15"><path fill="#7B61FF" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"></path></svg>'
+      : '<svg viewBox="0 0 16 15" width="16" height="15"><path fill="#7B61FF" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512z"></path></svg>';
       
     bubble.innerHTML = `
       ${log.message_body.replace(/\n/g, '<br>')}
-      <span style="float: right; font-size: 11px; color: #667781; margin: 10px 0 -5px 10px; display:flex; align-items:center; gap:3px;">
+      <span style="float: right; font-size: 11px; color: #8C7DE6; margin: 10px 0 -5px 10px; display:flex; align-items:center; gap:3px;">
         ${timeStr} ${ticksSvg}
       </span>
     `;
@@ -2872,7 +2872,7 @@ function appendMessageBubble(log) {
     bubble.style = 'align-self: flex-start; background: #ffffff; padding: 6px 7px 8px 9px; border-radius: 0 8px 8px 8px; max-width: 65%; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); position: relative; font-size: 14.2px; color: #111b21; margin-bottom: 4px;';
     bubble.innerHTML = `
       ${log.message_body.replace(/\n/g, '<br>')}
-      <span style="float: right; font-size: 11px; color: #667781; margin: 10px 0 -5px 10px;">${timeStr}</span>
+      <span style="float: right; font-size: 11px; color: #8C7DE6; margin: 10px 0 -5px 10px;">${timeStr}</span>
     `;
   }
   
@@ -2981,15 +2981,14 @@ setTimeout(() => {
 async function toggleAIPause() {
   if (!activeInboxContact) return;
   
+  const toggleCheckbox = document.getElementById('btn-toggle-ai');
   const toggleLabel = document.getElementById('ai-toggle-label');
-  if (!toggleLabel) return;
+  if (!toggleCheckbox || !toggleLabel) return;
   
   // Optimistic UI update
-  const isCurrentlyPaused = toggleLabel.innerText.includes('PAUSED');
-  const newPausedState = !isCurrentlyPaused;
-  
+  const newPausedState = !toggleCheckbox.checked; // If it's unchecked, AI is paused
   toggleLabel.innerText = newPausedState ? '⏸️ AI: PAUSED' : '🤖 AI: ON';
-  toggleLabel.style.color = newPausedState ? '#e1306c' : '#111b21';
+  toggleLabel.style.color = newPausedState ? '#e1306c' : 'var(--ink-60)';
   
   try {
     // Update the leads table to set is_ai_paused
@@ -3030,6 +3029,8 @@ loadInboxChat = async function(lead) {
   if (toggleLabel) {
     const isPaused = lead.is_ai_paused || false;
     toggleLabel.innerText = isPaused ? '⏸️ AI: PAUSED' : '🤖 AI: ON';
-    toggleLabel.style.color = isPaused ? '#e1306c' : '#111b21';
+    toggleLabel.style.color = isPaused ? '#e1306c' : 'var(--ink-60)';
+    const toggleCheckbox = document.getElementById('btn-toggle-ai');
+    if (toggleCheckbox) toggleCheckbox.checked = !isPaused;
   }
 };

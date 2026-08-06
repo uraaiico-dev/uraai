@@ -480,11 +480,9 @@
           </div>
         </div>
         <!-- Live Chat Inbox Screen (WhatsApp Web Clone) -->
-        <div class="screen" id="inbox" style="padding:0; height:100%; display:flex; flex-direction:column; background:#E3E1E0;">
-          <!-- Top green bar behind the interface (like WhatsApp Web desktop) -->
-          <div style="height: 127px; width: 100%; background-color: #00a884; position: absolute; top: 0; left: 0; z-index: 0;"></div>
+        <div class="screen" id="inbox" style="padding:0; height:100%; display:flex; flex-direction:column; background:var(--surface);">
           
-          <div class="wa-clone-container" style="position: relative; z-index: 1; flex: 1; display: flex; max-width: 1600px; margin: 20px auto; width: 95%; background: #ffffff; box-shadow: 0 6px 18px rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; height: calc(100vh - 40px);">
+          <div class="wa-clone-container" style="position: relative; z-index: 1; flex: 1; display: flex; max-width: 1600px; margin: 20px auto; width: 95%; background: #ffffff; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border-radius: 16px; overflow: hidden; height: calc(100vh - 40px);">
             
             <!-- Left Sidebar -->
             <div class="wa-clone-sidebar" style="width: 30%; min-width: 300px; border-right: 1px solid #e9edef; display: flex; flex-direction: column; background: #ffffff;">
@@ -536,8 +534,12 @@
                 </div>
                 <div style="display:flex; align-items:center; gap: 20px; color: #54656f;">
                   <!-- AI Pause Toggle -->
-                  <div style="display:flex; align-items:center; gap: 6px; background: #e9edef; padding: 4px 10px; border-radius: 12px; cursor:pointer;" id="btn-toggle-ai" title="Pause AI to reply manually">
-                    <span style="font-size:12px; font-weight:600;" id="ai-toggle-label">🤖 AI: ON</span>
+                  <div class="ai-toggle-container" style="display:flex; align-items:center; gap:8px;" title="Pause AI to reply manually">
+                    <span style="font-size:12px; font-weight:600; color:var(--ink-60);" id="ai-toggle-label">🤖 AI: ON</span>
+                    <label class="switch">
+                      <input type="checkbox" id="btn-toggle-ai" checked>
+                      <span class="slider round"></span>
+                    </label>
                   </div>
                   <span style="cursor:pointer;">🔍</span>
                   <span style="cursor:pointer;">⋮</span>
@@ -554,11 +556,11 @@
                   <span style="float: right; font-size: 11px; color: #667781; margin: 10px 0 -5px 10px;">12:45 PM</span>
                 </div>
                 
-                <div class="wa-bubble-sent" style="align-self: flex-end; background: #d9fdd3; padding: 6px 7px 8px 9px; border-radius: 8px 0 8px 8px; max-width: 65%; box-shadow: 0 1px 0.5px rgba(11,20,26,.13); position: relative; font-size: 14.2px; color: #111b21;">
+                <div class="wa-bubble-sent" style="align-self: flex-end; background: #F0EEFF; padding: 8px 12px; border-radius: 12px 12px 0 12px; max-width: 65%; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; font-size: 14.2px; color: #5B3FD9;">
                   Sure! What time works for you?
-                  <span style="float: right; font-size: 11px; color: #667781; margin: 10px 0 -5px 10px; display:flex; align-items:center; gap:3px;">
+                  <span style="float: right; font-size: 11px; color: #7B61FF; margin: 10px 0 -5px 10px; display:flex; align-items:center; gap:3px;">
                     12:46 PM 
-                    <svg viewBox="0 0 16 15" width="16" height="15"><path fill="#53bdeb" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"></path></svg>
+                    <svg viewBox="0 0 16 15" width="16" height="15"><path fill="#7B61FF" d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z"></path></svg>
                   </span>
                 </div>
               </div>
@@ -575,12 +577,10 @@
             </div>
 
             <!-- Empty State -->
-            <div class="wa-clone-empty" id="inbox-empty" style="display:none; flex: 1; background: #f0f2f5; border-left: 1px solid #e9edef; flex-direction: column; align-items: center; justify-content: center; border-bottom: 6px solid #43c5a5;">
-              <h1 style="font-size: 32px; font-weight: 300; color: #41525d; margin-top: 28px;">WhatsApp Web</h1>
-              <div style="font-size: 14px; color: #667781; margin-top: 18px; text-align: center; line-height: 20px;">Send and receive messages without keeping your phone online.<br>Use WhatsApp on up to 4 linked devices and 1 phone at the same time.</div>
-              <div style="margin-top: 40px; display: flex; align-items: center; gap: 4px; font-size: 14px; color: #8696a0;">
-                🔒 End-to-end encrypted
-              </div>
+            <div class="wa-clone-empty" id="inbox-empty" style="display:none; flex: 1; background: var(--surface); border-left: 1px solid #e9edef; flex-direction: column; align-items: center; justify-content: center;">
+              <div style="font-size: 48px; margin-bottom: 20px;">💬</div>
+              <h1 style="font-size: 28px; font-weight: 600; color: var(--ink); margin-top: 0px;">Uraai Inbox</h1>
+              <div style="font-size: 15px; color: var(--ink-60); margin-top: 12px; text-align: center; line-height: 22px;">Select a conversation from the left to start chatting.<br>AI will handle the heavy lifting.</div>
             </div>
             
           </div>
