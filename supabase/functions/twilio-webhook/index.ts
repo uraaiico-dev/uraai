@@ -8,8 +8,8 @@ export const config = {
 // ─── PLAN REPLY LIMITS ───
 const PLAN_LIMITS: Record<string, number> = {
   starter: 50,
-  pro: 2000,
-  max: 10000,
+  pro: 5000,
+  max: 25000,
 };
 
 serve(async (req) => {

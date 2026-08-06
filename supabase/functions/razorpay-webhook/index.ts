@@ -42,16 +42,16 @@ serve(async (req) => {
       if (paymentEntity.amount === 199900) newPlan = 'pro';
       else if (paymentEntity.amount === 399900) newPlan = 'max';
 
-      // Initialize Supabase admin client to bypass RLS
       const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // Upgrade the user's plan in the database
+      // Upgrade the user's plan and give them 30 days of access
+      const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const { error: updateError } = await supabaseAdmin
         .from('users')
-        .update({ plan: newPlan })
+        .update({ plan: newPlan, subscription_end_date: nextMonth })
         .eq('id', user_id);
 
       if (updateError) {
@@ -59,7 +59,29 @@ serve(async (req) => {
         throw updateError;
       }
 
-      console.log(`Successfully upgraded user ${user_id} to ${newPlan} plan.`);
+      console.log(`Successfully upgraded user ${user_id} to ${newPlan} plan until ${nextMonth}.`);
+    }
+
+    // Process subscription cancellations or failures (Revenue Leakage Protection)
+    if (payload.event === 'subscription.halted' || payload.event === 'subscription.cancelled' || payload.event === 'payment.failed') {
+      const entity = payload.payload.subscription?.entity || payload.payload.payment?.entity || {};
+      const user_id = entity.notes?.user_id;
+
+      if (user_id) {
+        const supabaseAdmin = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        // Downgrade immediately by setting end date to yesterday
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        await supabaseAdmin
+          .from('users')
+          .update({ plan: 'starter', subscription_end_date: yesterday })
+          .eq('id', user_id);
+          
+        console.log(`[CFO ACTION] Downgraded user ${user_id} to starter due to payment failure/cancellation.`);
+      }
     }
 
     return new Response(JSON.stringify({ status: 'success' }), {

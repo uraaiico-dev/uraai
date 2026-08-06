@@ -7,8 +7,8 @@ export const config = {
 
 const PLAN_LIMITS: Record<string, number> = {
   starter: 50,
-  pro: 2000,
-  max: 10000,
+  pro: 5000,
+  max: 25000,
 };
 
 serve(async (req) => {
@@ -34,8 +34,36 @@ serve(async (req) => {
   }
 
   try {
+    // ─── 1.5. Security: HMAC-SHA256 Payload Verification ───
+    const rawBody = await req.text();
+    const metaSignature = req.headers.get("x-hub-signature-256");
+    
+    // In production, require META_APP_SECRET. Fallback for testing only.
+    const appSecret = Deno.env.get("META_APP_SECRET") || "dummy_secret";
+    
+    if (metaSignature) {
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(appSecret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+      const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
+      const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      const expectedSignature = `sha256=${signatureHex}`;
+      
+      if (metaSignature !== expectedSignature) {
+        console.error("[SECURITY] Invalid Meta Signature");
+        return new Response("Unauthorized", { status: 401 });
+      }
+    }
+
     // ─── 2. Parse incoming Meta Webhook ───
-    const body = await req.json();
+    const body = JSON.parse(rawBody);
 
     // Check if it's a WhatsApp status update (message read, delivered, etc)
     if (!body.entry?.[0]?.changes?.[0]?.value?.messages) {
@@ -128,6 +156,30 @@ serve(async (req) => {
         return new Response("OK", { status: 200 });
       }
     }
+    // ─── 4c. Check if AI is Paused for this Customer (Human Handoff) ───
+    const { data: customerLead } = await supabase
+      .from("leads")
+      .select("is_ai_paused")
+      .eq("user_id", user_id)
+      .eq("phone", fromNumber)
+      .maybeSingle();
+
+    if (customerLead?.is_ai_paused) {
+      console.log(`[PAUSE BOT] AI is paused for customer ${fromNumber}. Skipping AI reply.`);
+      
+      // Still log the incoming message so it shows up in the Uraai Live Inbox for the human to read
+      await supabase.from("whatsapp_logs").insert({
+        user_id: user_id,
+        direction: "inbound",
+        from_number: fromNumber,
+        to_number: toNumber,
+        message_body: customerMessage,
+        ai_reply: "[AI Paused - Human took over]",
+        status: "read",
+      });
+      
+      return new Response("OK", { status: 200 });
+    }
 
     // ─── 5. Check reply usage limits ───
     const monthlyLimit = PLAN_LIMITS[plan] ?? 50;
@@ -201,21 +253,37 @@ YOUR ADVANCED RULES:
 7. IMPORTANT BOOKING RULE: ONLY when the user has provided a clear date, time, and service for an appointment that aligns with the business hours and knowledge, you MUST secretly include a booking tag at the very end of your response exactly like this: <BOOKING date="YYYY-MM-DD" time="HH:MM" service="Service Name">`;
 
       const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-      const geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: systemPrompt + "\n\nCustomer: " + customerMessage }] }],
-          }),
-        }
-      );
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000); // 7-second timeout
 
-      const geminiData = await geminiResponse.json();
-      replyMessage =
-        geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Sorry, I couldn't understand that. Please contact us directly.";
+      try {
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: systemPrompt + "\n\nCustomer: " + customerMessage }] }],
+            }),
+            signal: controller.signal
+          }
+        );
+        clearTimeout(timeoutId);
+        const geminiData = await geminiResponse.json();
+        replyMessage =
+          geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ||
+          "Sorry, I couldn't understand that. Please contact us directly.";
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error("[ERROR] Gemini API Timeout or Failure:", error);
+        replyMessage = "We are experiencing high volume right now. Please hold on, or contact us directly if urgent.";
+      }
+    }
+
+    // ─── 7a. Marketing: Viral Watermark for Starter Plan ───
+    if (plan === 'starter' && replyMessage) {
+      replyMessage += "\n\n_Powered by Uraai - Build your AI bot today at uraai.com_";
     }
 
     // ─── 7b. Parse Booking Tags ───
