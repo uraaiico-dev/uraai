@@ -354,7 +354,7 @@ function navigateTo(screenId) {
     }
     if (screenId === 'inbox') {
       title = 'Live Inbox';
-      setTimeout(() => initInbox(), 100);
+      setTimeout(() => initLiveInbox(), 100);
     }
     if (screenId === 'crm') {
       title = 'CRM & Bookings';
