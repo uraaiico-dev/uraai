@@ -967,8 +967,26 @@ function simulateIncomingMessage() {
 
 // --- PORTAL STATE ACTIONS ---
 
+function showAuthInlineError(msg) {
+  const errEl = document.getElementById('auth-inline-error');
+  if (errEl) {
+    errEl.innerText = `⚠️ ${msg}`;
+    errEl.style.display = 'block';
+  }
+  triggerNotification('Error', msg);
+}
+
+function clearAuthInlineError() {
+  const errEl = document.getElementById('auth-inline-error');
+  if (errEl) {
+    errEl.innerText = '';
+    errEl.style.display = 'none';
+  }
+}
+
 // Sign Up Handler
 async function handleSignUpSubmit() {
+  clearAuthInlineError();
   const fullName = document.getElementById('su-fullname').value.trim();
   const email = document.getElementById('su-email').value.trim();
   const password = document.getElementById('su-password').value.trim();
@@ -978,8 +996,8 @@ async function handleSignUpSubmit() {
   const city = document.getElementById('su-city').value.trim();
 
   if (!fullName || !email || !password || !phone || !businessName || !city) {
-    triggerNotification('Error', 'Please fill out all signup fields.');
-    return;
+    showAuthInlineError('Please fill out all signup fields.');
+    return false;
   }
 
   try {
@@ -1018,7 +1036,7 @@ async function handleSignUpSubmit() {
     setTimeout(() => openProfileModal(), 300);
     return true;
   } catch (err) {
-    triggerNotification('Error', err.message || 'Signup failed.');
+    showAuthInlineError(err.message || 'Signup failed.');
     const btn = document.getElementById('su-btn-submit');
     btn.classList.remove('loading');
     btn.disabled = false;
@@ -1028,12 +1046,13 @@ async function handleSignUpSubmit() {
 
 // Log In Handler
 async function handleLogInSubmit() {
+  clearAuthInlineError();
   const email = document.getElementById('li-email').value.trim();
   const password = document.getElementById('li-password').value.trim();
 
   if (!email || !password) {
-    triggerNotification('Error', 'Please fill out email and password.');
-    return;
+    showAuthInlineError('Please fill out email and password.');
+    return false;
   }
 
   try {
@@ -1125,7 +1144,7 @@ async function handleLogInSubmit() {
     navigateTo('dashboard');
     return true;
   } catch (err) {
-    triggerNotification('Error', err.message || 'Login failed.');
+    showAuthInlineError(err.message || 'Login failed.');
     const btn = document.getElementById('li-btn-submit');
     btn.classList.remove('loading');
     btn.disabled = false;

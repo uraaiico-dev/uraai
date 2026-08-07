@@ -26,6 +26,7 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
+  <div id="toast-container"></div>
 
   <!-- ==================== LANDING PAGE / MARKETING SITE ==================== -->
   <div id="landing-page-root">
@@ -1142,6 +1143,9 @@
         <div class="modal-tab-opt active" id="tab-opt-signup">Sign Up</div>
         <div class="modal-tab-opt" id="tab-opt-login">Log In</div>
       </div>
+
+      <!-- Inline Error Banner -->
+      <div id="auth-inline-error" style="display:none; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); border-radius:10px; padding:10px 14px; color:#ef4444; font-size:13px; font-weight:600; margin-bottom:14px; text-align:center;"></div>
 
       <!-- Important Information Banner -->
       <div class="auth-notice-banner" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 12px 14px; border-radius: 12px; margin-bottom: 16px; font-size: 12px; color: var(--ink-80); line-height: 1.5;">
