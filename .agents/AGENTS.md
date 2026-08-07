@@ -23,8 +23,18 @@
     - **Starter (Free - ₹0)**: 1 Bot | 50 AI replies/mo | 0 Broadcasts | 1 Team Member | 3 Languages (Tamil, Hindi, English) | 7-day chat history | Mandatory viral watermark (`⚡ Powered by Uraai (AI Bot for Business)`).
     - **Pro (Growth - ₹1,999/mo)**: 3 Bots | 5,000 AI replies/mo | 500 Broadcasts/mo | 3 Team Members | 5 Languages (+ Telugu, Malayalam) | Lead CSV Export | Unlimited chat history.
     - **Max (Power - ₹3,999/mo)**: Unlimited Bots | 25,000 AI replies/mo | 5,000 Broadcasts/mo | 10 Team Members + roles | 8+ Languages (+ Kannada, Bengali, Marathi) | AI Lead Scoring | Multi-step Sequences | Razorpay Payment Integration | CRM Integration.
-  - **Domain Setup:** Registered `uraai.in` on GoDaddy, connected via Vercel Nameservers (`ns1.vercel-dns.com` & `ns2.vercel-dns.com`) to bypass GoDaddy DigiO/WHOIS glitches and serve via global edge CDN.
-- **Promo Code Voucher System:** Built a 14-day Pro trial voucher system (`PRO14`, `TRIAL14`, `URAAI14`, `SALON14`, `GROWTH14`). Entering a valid promo code in the Billing screen immediately activates the Pro plan for 14 days without requiring credit card or Razorpay payment upfront.
+  - **Domain & Edge CDN Setup:** Registered `uraai.in` on GoDaddy, connected via Vercel Nameservers (`ns1.vercel-dns.com` & `ns2.vercel-dns.com`). Live with SSL at `https://uraai.in`.
+- **Single-Use Promo Code Voucher System:** Built 14-day Pro trial voucher system (`PRO14`, `TRIAL14`, `URAAI14`, `SALON14`, `GROWTH14`, `VIP14`). Promo codes are strictly single-use per user account / phone number, stored in Supabase `users.promo_code` column.
+- **Dual WhatsApp Connection Flow:**
+  - **Option A (Facebook Embedded Signup):** Uses `FB.login` with `config_id: '4551130871834024'` and listens for Meta postMessage events (`WA_EMBEDDED_SIGNUP`). Exchanges access token via Deno Edge Function `exchange-meta-token`.
+  - **Option B (Manual API Key Entry):** Users can directly paste Meta Phone Number ID, Permanent Access Token, and WhatsApp Number into Uraai (`showManualMetaSetupModal`). Saves directly to `bot_settings` and `users` tables.
+- **Meta Developer Console & Legal Compliance:**
+  - Published live legal pages: `https://uraai.in/privacy.html` and `https://uraai.in/terms.html`.
+  - Configured Meta OAuth Redirect URIs & Allowed Domains for JavaScript SDK (`uraai.in`, `www.uraai.in`, `uraai-app.vercel.app`).
+  - Webhook Endpoint: `https://fmqgxctgowrpepbnccwq.supabase.co/functions/v1/meta-webhook` with Verify Token `https://fmqgxctgowrpepbnccwq.supabase.co`.
+- **Redesigned Auth Modal & Error Handling:**
+  - Standard user-friendly Sign Up and Log In forms with pre-login Information Banner highlighting the Mandatory Dedicated SIM rule and Free Starter Plan.
+  - Crisp inline error banner (`#auth-inline-error`) inside the modal and high z-index toast overlays (`z-index: 9999999`).
 - **Razorpay Testing Strategy:** Testing phase uses Razorpay Test Mode keys (`rzp_test_...`). Live keys (`rzp_live_...`) are configured via Supabase environment variables when launching to paying clients.
 - **3-Bot Architecture:** Pro plan (3 Bots) allows 1 WhatsApp Bot + 1 Instagram DM Bot + 1 Email Bot simultaneously. Max plan allows unlimited bots/multi-branch locations.
 
