@@ -438,20 +438,21 @@ function syncUI() {
   });
 
   // 1. Dashboard Info
-  const initial = state.userProfile.fullName.charAt(0).toUpperCase();
-  document.getElementById('dash-user-name').innerText = `${state.userProfile.fullName} 👋`;
+  const userFullName = state.userProfile.fullName || state.userProfile.email.split('@')[0] || 'User';
+  const initial = userFullName.charAt(0).toUpperCase();
+  document.getElementById('dash-user-name').innerText = `${userFullName} 👋`;
   document.getElementById('dash-avatar-circle').innerText = initial;
-  document.getElementById('builder-business-name-sub').innerText = `${state.userProfile.businessType} — Active`;
+  document.getElementById('builder-business-name-sub').innerText = `${state.userProfile.businessType || 'Business'} — Active`;
 
   // Sync Desktop Sidebar Profile Info
   const sidebarAvatar = document.getElementById('sidebar-avatar-circle');
   if (sidebarAvatar) sidebarAvatar.innerText = initial;
   
   const sidebarUser = document.getElementById('sidebar-user-name');
-  if (sidebarUser) sidebarUser.innerText = state.userProfile.fullName;
+  if (sidebarUser) sidebarUser.innerText = userFullName;
 
   const sidebarBiz = document.getElementById('sidebar-business-name');
-  if (sidebarBiz) sidebarBiz.innerText = state.userProfile.businessName;
+  if (sidebarBiz) sidebarBiz.innerText = state.userProfile.businessName || 'My Business';
 
   // Sync Header Plan Badge
   const planBadge = document.getElementById('app-header-plan-badge');
