@@ -1939,35 +1939,56 @@ function launchFacebookEmbeddedSignup() {
       <div class="wa-connecting-state">
         <div class="wa-connecting-spinner"></div>
         <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;">
-          Opening Facebook...
+          Connecting with Facebook...
         </h3>
-        <p style="font-size:13px;color:var(--ink-40);">
-          Complete the steps in the popup window
+        <p style="font-size:13px;color:var(--ink-40);margin-bottom:16px;">
+          Complete the WhatsApp setup steps in the popup window.
         </p>
+        <button onclick="showManualMetaSetupModal()" style="padding:10px 16px; background:var(--surface); border:1px solid var(--border); border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; color:var(--ink-70);">
+          ⚙️ Switch to Manual API Keys
+        </button>
       </div>
     `;
   }
 
   // Check if FB SDK is loaded
   if (typeof FB === 'undefined') {
-    showWhatsAppSetupError('Facebook SDK not loaded. Please refresh and try again.');
+    showWhatsAppSetupError('Facebook SDK not loaded. Please refresh the page and try again.');
     return;
   }
 
+  // Listen for Meta Embedded Signup postMessage events
+  window.removeEventListener('message', handleMetaPostMessage);
+  window.addEventListener('message', handleMetaPostMessage);
+
   // Launch Meta Embedded Signup
   FB.login(function(response) {
-    if (response.authResponse && response.authResponse.accessToken) {
-      const accessToken = response.authResponse.accessToken;
+    if (response.authResponse && (response.authResponse.accessToken || response.authResponse.code)) {
+      const token = response.authResponse.accessToken || response.authResponse.code;
       console.log('FB Login success, token received');
-      handleEmbeddedSignupSuccess(accessToken);
+      handleEmbeddedSignupSuccess(token);
     } else {
-      console.log('FB Login cancelled or failed');
-      showWhatsAppSetupError('Facebook login cancelled or blocked. You can also click below to enter Meta API keys manually.');
+      console.log('FB Login response:', response);
     }
   }, {
+    config_id: '4551130871834024',
     scope: 'whatsapp_business_messaging,whatsapp_business_management',
-    return_scopes: true
+    response_type: 'token',
+    override_default_response_type: true
   });
+}
+
+function handleMetaPostMessage(event) {
+  if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
+  try {
+    const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+    if (data && (data.type === 'WA_EMBEDDED_SIGNUP' || data.event === 'FINISH')) {
+      console.log('Meta Embedded Signup event:', data);
+      if (data.data && data.data.waba_id) {
+        handleEmbeddedSignupSuccess(data.data.access_token || 'embedded_success');
+      }
+    }
+  } catch (e) {}
 }
 
 async function handleEmbeddedSignupSuccess(accessToken) {
