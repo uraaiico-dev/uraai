@@ -1143,34 +1143,73 @@
         <div class="modal-tab-opt" id="tab-opt-login">Log In</div>
       </div>
 
-      <!-- Conversational Auth UI -->
-      <div id="auth-bot-ui">
-        <div class="auth-chat-history" id="auth-chat-history">
-          <!-- Bubbles go here -->
+      <!-- Important Information Banner -->
+      <div class="auth-notice-banner" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); padding: 12px 14px; border-radius: 12px; margin-bottom: 16px; font-size: 12px; color: var(--ink-80); line-height: 1.5;">
+        <div style="display:flex; align-items:center; gap:6px; font-weight:700; color: var(--amber); margin-bottom: 4px;">
+          <span>⚠️ Important Before You Start</span>
         </div>
-        
-        <!-- Hidden inputs for backward compatibility -->
-        <div style="display:none;">
-          <input type="text" id="su-fullname">
-          <input type="email" id="su-email">
-          <input type="password" id="su-password">
-          <input type="tel" id="su-phone">
-          <input type="text" id="su-busname">
-          <select id="su-bustype"><option value="Other Business">Other Service</option></select>
-          <input type="text" id="su-city">
-          <button id="su-btn-submit"></button>
-          
-          <input type="email" id="li-email">
-          <input type="password" id="li-password">
-          <button id="li-btn-submit"></button>
+        <ul style="margin:0; padding-left:16px;">
+          <li><strong>Dedicated Business SIM:</strong> Use a dedicated phone number for your bot. Do not connect your personal WhatsApp number.</li>
+          <li><strong>Free Starter Plan:</strong> 1 Bot, 50 AI Replies/month included free. No credit card required.</li>
+        </ul>
+      </div>
+
+      <!-- Standard Sign Up Form -->
+      <div id="form-panel-signup" style="display: block;">
+        <div class="modal-form-block">
+          <label>Full Name</label>
+          <input type="text" id="su-fullname" class="modal-field" placeholder="e.g. Rahul Sharma">
         </div>
-        
-        <div class="auth-input-area">
-          <input type="text" id="auth-bot-input" class="auth-interactive-input" placeholder="Type here..." autocomplete="off">
-          <button id="auth-bot-send" class="auth-send-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/></svg>
-          </button>
+        <div class="modal-form-block">
+          <label>Email Address</label>
+          <input type="email" id="su-email" class="modal-field" placeholder="name@business.com">
         </div>
+        <div class="modal-form-block">
+          <label>Password</label>
+          <input type="password" id="su-password" class="modal-field" placeholder="Minimum 6 characters">
+        </div>
+        <div class="modal-form-block">
+          <label>Dedicated Business Phone Number</label>
+          <input type="tel" id="su-phone" class="modal-field" placeholder="e.g. +91 98765 43210">
+        </div>
+        <div class="modal-form-block">
+          <label>Business Name</label>
+          <input type="text" id="su-busname" class="modal-field" placeholder="e.g. Priya Beauty Salon">
+        </div>
+        <div class="form-group-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="modal-form-block">
+            <label>Business Category</label>
+            <select id="su-bustype" class="modal-field">
+              <option value="Beauty Parlour & Hair Styling">Beauty Parlour & Salon</option>
+              <option value="Gym & Fitness Center">Gym & Fitness</option>
+              <option value="Clinic & Healthcare">Clinic & Healthcare</option>
+              <option value="Retail Store">Retail Store</option>
+              <option value="Other Service">Other Service</option>
+            </select>
+          </div>
+          <div class="modal-form-block">
+            <label>City</label>
+            <input type="text" id="su-city" class="modal-field" placeholder="e.g. Chennai">
+          </div>
+        </div>
+        <button id="su-btn-submit" class="btn-primary" style="width:100%; height:46px; border-radius:12px; font-size:15px; font-weight:700; margin-top:12px;">
+          Create Free Account 🚀
+        </button>
+      </div>
+
+      <!-- Standard Log In Form -->
+      <div id="form-panel-login" style="display: none;">
+        <div class="modal-form-block">
+          <label>Email Address</label>
+          <input type="email" id="li-email" class="modal-field" placeholder="name@business.com">
+        </div>
+        <div class="modal-form-block">
+          <label>Password</label>
+          <input type="password" id="li-password" class="modal-field" placeholder="••••••••">
+        </div>
+        <button id="li-btn-submit" class="btn-primary" style="width:100%; height:46px; border-radius:12px; font-size:15px; font-weight:700; margin-top:16px;">
+          Log In to Dashboard ➔
+        </button>
       </div>
     </div>
   </div>

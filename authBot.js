@@ -159,28 +159,34 @@ async function finishAuthFlow() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const sendBtn = document.getElementById('auth-bot-send');
-  const inputEl = document.getElementById('auth-bot-input');
-  if(sendBtn) {
-    sendBtn.addEventListener('click', handleAuthSubmit);
-  }
-  if(inputEl) {
-    inputEl.addEventListener('keypress', (e) => {
-      if(e.key === 'Enter') handleAuthSubmit();
-    });
-  }
-  
-  // Overwrite openAuthModal from app.js
-  window.openAuthModal = function(mode = 'signup') {
-    const modal = document.getElementById('auth-modal');
-    if(modal) modal.classList.add('active');
-    initAuthBot(mode);
-  }
-  
-  // Handle Tabs
+window.switchAuthTab = function(mode = 'signup') {
+  const suPanel = document.getElementById('form-panel-signup');
+  const liPanel = document.getElementById('form-panel-login');
   const suTab = document.getElementById('tab-opt-signup');
   const liTab = document.getElementById('tab-opt-login');
-  if(suTab) suTab.addEventListener('click', () => initAuthBot('signup'));
-  if(liTab) liTab.addEventListener('click', () => initAuthBot('login'));
+
+  if (mode === 'signup') {
+    if (suPanel) suPanel.style.display = 'block';
+    if (liPanel) liPanel.style.display = 'none';
+    if (suTab) suTab.classList.add('active');
+    if (liTab) liTab.classList.remove('active');
+  } else {
+    if (suPanel) suPanel.style.display = 'none';
+    if (liPanel) liPanel.style.display = 'block';
+    if (suTab) suTab.classList.remove('active');
+    if (liTab) liTab.classList.add('active');
+  }
+};
+
+window.openAuthModal = function(mode = 'signup') {
+  const modal = document.getElementById('auth-modal');
+  if (modal) modal.classList.add('active');
+  switchAuthTab(mode);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const suTab = document.getElementById('tab-opt-signup');
+  const liTab = document.getElementById('tab-opt-login');
+  if (suTab) suTab.addEventListener('click', () => switchAuthTab('signup'));
+  if (liTab) liTab.addEventListener('click', () => switchAuthTab('login'));
 });
