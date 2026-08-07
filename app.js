@@ -1890,9 +1890,12 @@ function showWhatsAppSetupModal() {
           </div>
         </div>
       </div>
-      <div class="wa-setup-modal-actions">
+      <div class="wa-setup-modal-actions" style="display:flex; flex-direction:column; gap:10px;">
         <button class="btn-wa-launch" id="btn-launch-fb-signup" onclick="launchFacebookEmbeddedSignup()">
           <span>🚀</span> Continue with Facebook
+        </button>
+        <button onclick="showManualMetaSetupModal()" style="padding:12px; background:var(--surface); border:1.5px solid var(--border); border-radius:12px; font-weight:600; cursor:pointer; font-size:13px; color:var(--ink-70);">
+          ⚙️ Enter Meta API Keys Manually
         </button>
         <button class="btn-wa-cancel" onclick="closeWhatsAppSetupModal()">
           Cancel
@@ -1912,17 +1915,19 @@ function closeWhatsAppSetupModal() {
 function launchFacebookEmbeddedSignup() {
   // Show connecting state in modal
   const modal = document.querySelector('.wa-setup-modal');
-  modal.innerHTML = `
-    <div class="wa-connecting-state">
-      <div class="wa-connecting-spinner"></div>
-      <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;">
-        Opening Facebook...
-      </h3>
-      <p style="font-size:13px;color:var(--ink-40);">
-        Complete the steps in the popup window
-      </p>
-    </div>
-  `;
+  if (modal) {
+    modal.innerHTML = `
+      <div class="wa-connecting-state">
+        <div class="wa-connecting-spinner"></div>
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;">
+          Opening Facebook...
+        </h3>
+        <p style="font-size:13px;color:var(--ink-40);">
+          Complete the steps in the popup window
+        </p>
+      </div>
+    `;
+  }
 
   // Check if FB SDK is loaded
   if (typeof FB === 'undefined') {
@@ -1932,16 +1937,17 @@ function launchFacebookEmbeddedSignup() {
 
   // Launch Meta Embedded Signup
   FB.login(function(response) {
-    if (response.authResponse) {
+    if (response.authResponse && response.authResponse.accessToken) {
       const accessToken = response.authResponse.accessToken;
       console.log('FB Login success, token received');
       handleEmbeddedSignupSuccess(accessToken);
     } else {
       console.log('FB Login cancelled or failed');
-      showWhatsAppSetupError('Connection cancelled. Please try again.');
+      showWhatsAppSetupError('Facebook login cancelled or blocked. You can also click below to enter Meta API keys manually.');
     }
   }, {
-    config_id: '4551130871834024'
+    scope: 'whatsapp_business_messaging,whatsapp_business_management',
+    return_scopes: true
   });
 }
 
@@ -2022,6 +2028,10 @@ function showWhatsAppSetupError(message) {
           style="flex:1;padding:13px;background:var(--violet);color:white;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">
           Try Again
         </button>
+        <button onclick="showManualMetaSetupModal()" 
+          style="flex:1;padding:13px;background:var(--surface);color:var(--ink-70);border:1.5px solid var(--border);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
+          Enter Keys Manually
+        </button>
         <button onclick="closeWhatsAppSetupModal()" 
           style="padding:13px 18px;background:var(--surface);color:var(--ink-70);border:1.5px solid var(--border);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
           Cancel
@@ -2029,6 +2039,104 @@ function showWhatsAppSetupError(message) {
       </div>
     </div>
   `;
+}
+
+function showManualMetaSetupModal() {
+  const modal = document.querySelector('.wa-setup-modal');
+  if (!modal) return;
+
+  modal.innerHTML = `
+    <div class="wa-manual-setup-state">
+      <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:6px;">
+        ⚙️ Enter Meta API Details
+      </h3>
+      <p style="font-size:12px;color:var(--ink-60);margin-bottom:16px;">
+        Paste your Meta Phone Number ID & Access Token from your Meta Developer Console.
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:12px; text-align:left;">
+        <div>
+          <label style="font-size:11px; font-weight:700; color:var(--ink-60);">Phone Number ID</label>
+          <input type="text" id="manual-meta-phone-id" placeholder="e.g. 109876543210123" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:700; color:var(--ink-60);">Permanent Access Token</label>
+          <input type="password" id="manual-meta-token" placeholder="EAAG..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:700; color:var(--ink-60);">Display WhatsApp Phone Number</label>
+          <input type="tel" id="manual-meta-wa-phone" placeholder="e.g. +91 98765 43210" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button id="btn-save-manual-meta" onclick="saveManualMetaSetup()" 
+          style="flex:1; padding:12px; background:var(--violet); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer;">
+          Save & Connect
+        </button>
+        <button onclick="closeWhatsAppSetupModal()" 
+          style="padding:12px 16px; background:var(--surface); color:var(--ink-70); border:1px solid var(--border); border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+async function saveManualMetaSetup() {
+  const phoneId = document.getElementById('manual-meta-phone-id')?.value.trim();
+  const token = document.getElementById('manual-meta-token')?.value.trim();
+  const waPhone = document.getElementById('manual-meta-wa-phone')?.value.trim();
+
+  if (!phoneId || !token) {
+    triggerNotification('Error', 'Please fill in Phone Number ID and Access Token');
+    return;
+  }
+
+  const saveBtn = document.getElementById('btn-save-manual-meta');
+  if (saveBtn) {
+    saveBtn.innerText = 'Saving...';
+    saveBtn.disabled = true;
+  }
+
+  try {
+    if (state.userProfile.supabaseId) {
+      await supabase
+        .from('bot_settings')
+        .update({
+          meta_phone_id: phoneId,
+          meta_access_token: token,
+          wa_phone_number: waPhone
+        })
+        .eq('user_id', state.userProfile.supabaseId);
+
+      await supabase
+        .from('users')
+        .update({
+          wa_access_token: token,
+          wa_connected: true,
+          wa_phone_number: waPhone
+        })
+        .eq('id', state.userProfile.supabaseId);
+    }
+
+    state.channels.whatsapp = true;
+    state.userProfile.waConnected = true;
+    updateWhatsAppChannelCard(true);
+    syncUI();
+    closeWhatsAppSetupModal();
+
+    triggerNotification('Success', 'WhatsApp Business credentials connected successfully!');
+    addLog('system', 'WhatsApp Business credentials saved manually', 'success');
+  } catch (err) {
+    console.error('Save manual meta error:', err);
+    triggerNotification('Error', 'Failed to save credentials: ' + err.message);
+  } finally {
+    if (saveBtn) {
+      saveBtn.innerText = 'Save & Connect';
+      saveBtn.disabled = false;
+    }
+  }
 }
 
 function updateWhatsAppChannelCard(isConnected) {
