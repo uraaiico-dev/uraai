@@ -1397,6 +1397,80 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.body.classList.remove('app-loading');
 
+async function handleApplyPromoCode() {
+  const promoInput = document.getElementById('promo-code-input');
+  if (!promoInput) return;
+  
+  const code = promoInput.value.trim().toUpperCase();
+  if (!code) {
+    triggerNotification('Error', 'Please enter a promo code');
+    return;
+  }
+
+  const VALID_CODES = ['PRO14', 'TRIAL14', 'URAAI14', 'START14', 'SALON14', 'GROWTH14', 'VIP14'];
+  if (!VALID_CODES.includes(code)) {
+    triggerNotification('Error', 'Invalid or expired promo code');
+    return;
+  }
+
+  if (!state.userProfile.loggedIn || !state.userProfile.supabaseId) {
+    triggerNotification('Error', 'Please log in to redeem promo code');
+    openAuthModal('login');
+    return;
+  }
+
+  const applyBtn = document.getElementById('btn-apply-promo');
+  if (applyBtn) {
+    applyBtn.innerText = 'Applying...';
+    applyBtn.disabled = true;
+  }
+
+  try {
+    // Check if user has already redeemed a promo code
+    const { data: userRecord, error: fetchErr } = await supabase
+      .from('users')
+      .select('promo_code, plan, subscription_end_date')
+      .eq('id', state.userProfile.supabaseId)
+      .single();
+
+    if (fetchErr) throw fetchErr;
+
+    if (userRecord && userRecord.promo_code) {
+      triggerNotification('Error', `You have already redeemed promo code "${userRecord.promo_code}". Single-use limit reached.`);
+      return;
+    }
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 14); // 14 days trial
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        plan: 'pro',
+        promo_code: code,
+        subscription_end_date: expiryDate.toISOString()
+      })
+      .eq('id', state.userProfile.supabaseId);
+
+    if (error) throw error;
+
+    state.currentPlan = 'pro';
+    syncUI();
+    promoInput.value = '';
+
+    triggerNotification('Success', `🎉 Promo code ${code} redeemed! 14-Day Pro Trial Activated!`);
+    addLog('system', `Promo code ${code} redeemed: 14-day Pro Trial activated for single use`, 'success');
+  } catch (err) {
+    console.error('Promo code error:', err);
+    triggerNotification('Error', 'Failed to redeem promo code: ' + err.message);
+  } finally {
+    if (applyBtn) {
+      applyBtn.innerText = 'Apply Code';
+      applyBtn.disabled = false;
+    }
+  }
+}
+
   // Sidebar / Bottom Nav Click Navigation Event Delegation
   document.body.addEventListener('click', (e) => {
     // 1. Desktop Sidebar Item
@@ -1491,6 +1565,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const paymentClose = document.getElementById('payment-modal-close');
   if (paymentClose) paymentClose.onclick = closePaymentModal;
+
+  // Promo Code Voucher Apply Event
+  const applyPromoBtn = document.getElementById('btn-apply-promo');
+  if (applyPromoBtn) applyPromoBtn.onclick = handleApplyPromoCode;
 
   // App workspace onboarding buttons
   const s1BtnStart = document.getElementById('s1-btn-start');

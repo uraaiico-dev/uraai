@@ -1,5 +1,6 @@
--- 1. Add subscription expiration column
+-- 1. Add subscription expiration & promo code columns
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS subscription_end_date TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS promo_code TEXT;
 
 -- Initialize existing max/pro users with 30 days if null (for legacy users)
 UPDATE public.users 

@@ -1000,9 +1000,19 @@
           </div>
         </div>
 
-        <!-- Billing Screen -->
-        <div class="screen" id="pricing">
-          
+          <!-- Promo Code Voucher Box -->
+          <div class="promo-code-card" style="max-width: 650px; margin: 0 auto 32px auto; padding: 20px 24px; background: rgba(124, 58, 237, 0.04); border: 1.5px dashed var(--violet); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+            <div style="flex: 1;">
+              <h4 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px;">
+                <span>🎁 Have a Promo Code or Trial Voucher?</span>
+              </h4>
+              <p style="margin: 0; font-size: 13px; color: var(--ink-60);">Enter your 14-day Pro trial code to activate Growth features instantly for free.</p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-shrink: 0;">
+              <input type="text" id="promo-code-input" placeholder="e.g. PRO14" style="text-transform: uppercase; width: 120px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px; font-weight: 700; outline: none; letter-spacing: 1px;">
+              <button class="btn-primary" id="btn-apply-promo" style="padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; white-space: nowrap; background: var(--violet);">Apply Code</button>
+            </div>
+          </div>
 
           <div class="billing-plans-grid">
             <div class="plan" data-tier="starter">
