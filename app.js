@@ -438,11 +438,24 @@ function syncUI() {
   });
 
   // 1. Dashboard Info
-  const userFullName = state.userProfile.fullName || state.userProfile.email.split('@')[0] || 'User';
+  const userFullName = (state.userProfile.fullName && state.userProfile.fullName !== 'User')
+    ? state.userProfile.fullName 
+    : (state.userProfile.email ? state.userProfile.email.split('@')[0] : 'User');
+  const userBizName = (state.userProfile.businessName && state.userProfile.businessName !== 'My Business')
+    ? state.userProfile.businessName
+    : 'My Business';
+
   const initial = userFullName.charAt(0).toUpperCase();
   document.getElementById('dash-user-name').innerText = `${userFullName} 👋`;
   document.getElementById('dash-avatar-circle').innerText = initial;
   document.getElementById('builder-business-name-sub').innerText = `${state.userProfile.businessType || 'Business'} — Active`;
+
+  // Pre-fill Profile Settings Inputs
+  const nameInput = document.getElementById('settings-user-fullname');
+  if (nameInput && state.userProfile.fullName) nameInput.value = state.userProfile.fullName;
+
+  const bizInput = document.getElementById('settings-business-name');
+  if (bizInput && state.userProfile.businessName) bizInput.value = state.userProfile.businessName;
 
   // Sync Desktop Sidebar Profile Info
   const sidebarAvatar = document.getElementById('sidebar-avatar-circle');
@@ -452,7 +465,7 @@ function syncUI() {
   if (sidebarUser) sidebarUser.innerText = userFullName;
 
   const sidebarBiz = document.getElementById('sidebar-business-name');
-  if (sidebarBiz) sidebarBiz.innerText = state.userProfile.businessName || 'My Business';
+  if (sidebarBiz) sidebarBiz.innerText = userBizName;
 
   // Sync Header Plan Badge
   const planBadge = document.getElementById('app-header-plan-badge');
@@ -1068,14 +1081,19 @@ async function handleLogInSubmit() {
     const profile = await getUserProfile(userId);
     const botSettings = await getBotSettings(userId);
 
-    // 3. Load into state
+    // 3. Load into state with fallbacks
+    const resolvedEmail = profile?.email || authData.user?.email || email;
+    const resolvedName = profile?.full_name || authData.user?.user_metadata?.full_name || (resolvedEmail ? resolvedEmail.split('@')[0] : 'User');
+    const resolvedBiz = profile?.business_name || authData.user?.user_metadata?.business_name || 'My Business';
+    const resolvedType = profile?.business_type || authData.user?.user_metadata?.business_type || 'Local Business';
+
     state.userProfile.loggedIn = true;
     state.userProfile.supabaseId = userId;
-    state.userProfile.fullName = profile.full_name;
-    state.userProfile.email = profile.email;
-    state.userProfile.businessName = profile.business_name;
-    state.userProfile.businessType = profile.business_type;
-    state.userProfile.teamRole = profile.team_role || 'admin';
+    state.userProfile.fullName = resolvedName;
+    state.userProfile.email = resolvedEmail;
+    state.userProfile.businessName = resolvedBiz;
+    state.userProfile.businessType = resolvedType;
+    state.userProfile.teamRole = profile?.team_role || 'admin';
     
     let activePlan = profile.plan || 'starter';
     if (profile.subscription_end_date) {
@@ -1364,12 +1382,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       const profile = await getUserProfile(existingUser.id);
       const botSettings = await getBotSettings(existingUser.id);
 
+      const resolvedEmail = profile?.email || existingUser.email || '';
+      const resolvedName = profile?.full_name || existingUser.user_metadata?.full_name || (resolvedEmail ? resolvedEmail.split('@')[0] : 'User');
+      const resolvedBiz = profile?.business_name || existingUser.user_metadata?.business_name || 'My Business';
+      const resolvedType = profile?.business_type || existingUser.user_metadata?.business_type || 'Local Business';
+
       state.userProfile.loggedIn = true;
       state.userProfile.supabaseId = existingUser.id;
-      state.userProfile.fullName = profile.full_name;
-      state.userProfile.email = profile.email;
-      state.userProfile.businessName = profile.business_name;
-      state.userProfile.businessType = profile.business_type;
+      state.userProfile.fullName = resolvedName;
+      state.userProfile.email = resolvedEmail;
+      state.userProfile.businessName = resolvedBiz;
+      state.userProfile.businessType = resolvedType;
+
+      // Auto-heal missing profile row in users table
+      if (!profile || !profile.full_name || !profile.business_name) {
+        saveUserProfile(existingUser.id, {
+          fullName: resolvedName,
+          email: resolvedEmail,
+          phone: profile?.phone || '',
+          businessName: resolvedBiz,
+          businessType: resolvedType,
+          city: profile?.city || 'Chennai',
+          plan: profile?.plan || 'starter'
+        }).catch(err => console.warn('Profile auto-heal failed:', err));
+      }
       
       let activePlan = profile.plan || 'starter';
       if (profile.subscription_end_date) {
@@ -2583,7 +2619,55 @@ async function initCRM() {
   } catch (e) {
     console.error("CRM load error", e);
   }
-}
+// ─── BOT BUILDER & PROFILE SAVING ───
+document.getElementById('save-changes-btn')?.addEventListener('click', async () => {
+  const newFullName = document.getElementById('settings-user-fullname')?.value.trim();
+  const newBusinessName = document.getElementById('settings-business-name')?.value.trim();
+  const welcomeMsg = document.getElementById('welcome-msg-input')?.value.trim();
+
+  const btn = document.getElementById('save-changes-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Saving...';
+  }
+
+  try {
+    if (state.userProfile.supabaseId) {
+      if (newFullName || newBusinessName) {
+        if (newFullName) state.userProfile.fullName = newFullName;
+        if (newBusinessName) state.userProfile.businessName = newBusinessName;
+
+        await saveUserProfile(state.userProfile.supabaseId, {
+          fullName: state.userProfile.fullName,
+          email: state.userProfile.email,
+          phone: state.userProfile.phone || '',
+          businessName: state.userProfile.businessName,
+          businessType: state.userProfile.businessType || 'Local Business',
+          city: state.userProfile.city || 'Chennai',
+          plan: state.currentPlan
+        });
+      }
+
+      if (welcomeMsg) {
+        state.welcomeMessage = welcomeMsg;
+        await supabase
+          .from('bot_settings')
+          .update({ welcome_message: welcomeMsg })
+          .eq('user_id', state.userProfile.supabaseId);
+      }
+
+      syncUI();
+      triggerNotification('Success', 'Profile and bot settings saved!');
+    }
+  } catch (err) {
+    triggerNotification('Error', 'Failed to save profile: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Save changes';
+    }
+  }
+});
 
 // ─── BROADCASTS UI ───
 async function initBroadcasts() {

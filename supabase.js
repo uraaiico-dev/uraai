@@ -76,8 +76,8 @@ async function getUserProfile(userId) {
     .from('users')
     .select('*')
     .eq('id', userId)
-    .single();
-  if (error) throw error;
+    .maybeSingle();
+  if (error) console.warn("getUserProfile warning:", error);
   return data;
 }
 
