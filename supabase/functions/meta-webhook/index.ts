@@ -372,14 +372,19 @@ YOUR ADVANCED RULES:
       intentLabel = intentMatch[2];
       replyMessage = replyMessage.replace(intentMatch[0], '').trim();
       
-      // Update customer_leads table with lead_score and intent_label
-      await supabase.from('customer_leads').upsert({
-        user_id: user_id,
-        phone_number: fromNumber,
-        lead_score: leadScore,
-        intent_label: intentLabel,
-        last_contact: new Date().toISOString()
-      }, { onConflict: 'user_id,phone_number' });
+      // Update leads table with lead_score and intent_label
+      try {
+        await supabase.from('leads').upsert({
+          user_id: user_id,
+          phone: fromNumber,
+          customer_phone: fromNumber,
+          lead_score: leadScore,
+          intent_label: intentLabel,
+          last_interaction_at: new Date().toISOString()
+        }, { onConflict: 'user_id,phone' });
+      } catch (lErr) {
+        console.warn('Lead upsert warning:', lErr);
+      }
     }
 
     // ─── 7c. Parse Action / Booking Tags ───
