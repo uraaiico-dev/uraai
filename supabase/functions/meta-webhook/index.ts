@@ -11,6 +11,22 @@ const PLAN_LIMITS: Record<string, number> = {
   max: 25000,
 };
 
+const senderRateMap = new Map<string, { count: number; resetTime: number }>();
+
+function checkPerSenderRateLimit(fromNumber: string): boolean {
+  const now = Date.now();
+  const entry = senderRateMap.get(fromNumber);
+  if (!entry || now > entry.resetTime) {
+    senderRateMap.set(fromNumber, { count: 1, resetTime: now + 10000 });
+    return true;
+  }
+  if (entry.count >= 5) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
 serve(async (req) => {
   // ─── 1. Handle Webhook Verification (GET) ───
   if (req.method === "GET") {
@@ -37,11 +53,14 @@ serve(async (req) => {
     // ─── 1.5. Security: HMAC-SHA256 Payload Verification ───
     const rawBody = await req.text();
     const metaSignature = req.headers.get("x-hub-signature-256");
+    const appSecret = Deno.env.get("META_APP_SECRET");
     
-    // In production, require META_APP_SECRET. Fallback for testing only.
-    const appSecret = Deno.env.get("META_APP_SECRET") || "dummy_secret";
-    
-    if (metaSignature) {
+    // In production mode (when META_APP_SECRET is set), strictly enforce signature
+    if (appSecret) {
+      if (!metaSignature) {
+        console.error("[SECURITY] Missing x-hub-signature-256 header");
+        return new Response("Unauthorized", { status: 401 });
+      }
       const encoder = new TextEncoder();
       const key = await crypto.subtle.importKey(
         "raw",
@@ -76,6 +95,14 @@ serve(async (req) => {
     // Only handle text and interactive messages
     if (messageObj.type !== 'text' && messageObj.type !== 'interactive') {
       return new Response("OK", { status: 200 });
+    }
+
+    const fromNumber = messageObj.from;
+
+    // Apply per-sender rate limiting (max 5 msgs per 10s from single number)
+    if (!checkPerSenderRateLimit(fromNumber)) {
+      console.warn(`[RATE LIMIT] Throttling spammer ${fromNumber}`);
+      return new Response("Too Many Requests", { status: 429 });
     }
 
     const isInteractive = messageObj.type === 'interactive';
@@ -311,13 +338,23 @@ YOUR ADVANCED RULES:
         );
         clearTimeout(timeoutId);
         const geminiData = await geminiResponse.json();
-        replyMessage =
-          geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ||
-          "Sorry, I couldn't understand that. Please contact us directly.";
+        replyMessage = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
       } catch (error) {
         clearTimeout(timeoutId);
         console.error("[ERROR] Gemini API Timeout or Failure:", error);
-        replyMessage = "We are experiencing high volume right now. Please hold on, or contact us directly if urgent.";
+      }
+
+      // Local FAQ Matching Fallback if Gemini fails or times out
+      if (!replyMessage) {
+        const lowerMsg = (customerMessage || "").toLowerCase();
+        let matchedFaq = (faqData || []).find((f: any) => 
+          lowerMsg.includes((f.question || "").toLowerCase()) || (f.question || "").toLowerCase().includes(lowerMsg)
+        );
+        if (matchedFaq) {
+          replyMessage = matchedFaq.answer;
+        } else {
+          replyMessage = `Thanks for reaching out to ${business_name}! We are currently experiencing high volume, but a team member will get back to you shortly.`;
+        }
       }
     }
 

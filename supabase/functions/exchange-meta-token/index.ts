@@ -12,17 +12,40 @@ serve(async (req) => {
   }
 
   try {
-    const { access_token, user_id } = await req.json();
+    const { access_token } = await req.json();
 
-    if (!access_token || !user_id) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), { 
+    if (!access_token) {
+      return new Response(JSON.stringify({ error: "Missing access_token parameter" }), { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing Authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const supabaseServiceKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user: authUser }, error: authErr } = await supabaseAuth.auth.getUser();
+    if (authErr || !authUser) {
+      return new Response(JSON.stringify({ error: "Unauthorized caller" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const user_id = authUser.id;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 1. Get WABA ID from Meta

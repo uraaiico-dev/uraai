@@ -12,17 +12,40 @@ serve(async (req) => {
   }
 
   try {
-    const { to_number, message_body, user_id } = await req.json();
+    const { to_number, message_body } = await req.json();
 
-    if (!to_number || !message_body || !user_id) {
+    if (!to_number || !message_body) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing Authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const supabaseServiceKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user: authUser }, error: authErr } = await supabaseAuth.auth.getUser();
+    if (authErr || !authUser) {
+      return new Response(JSON.stringify({ error: "Unauthorized caller" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const user_id = authUser.id;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 1. Verify user, get plan details AND bot settings (for Meta tokens)

@@ -8,19 +8,41 @@ serve(async (req) => {
   }
 
   try {
-    const { recipients, message, userId } = await req.json();
+    const { recipients, message } = await req.json();
     
-    if (!recipients || !Array.isArray(recipients) || recipients.length === 0 || !message || !userId) {
-      return new Response(JSON.stringify({ error: "Missing recipients array, message, or userId" }), {
+    if (!recipients || !Array.isArray(recipients) || recipients.length === 0 || !message) {
+      return new Response(JSON.stringify({ error: "Missing recipients array or message" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SERVICE_ROLE_KEY") || ""
-    );
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing Authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+    const supabaseServiceKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
+
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user: authUser }, error: authErr } = await supabaseAuth.auth.getUser();
+    if (authErr || !authUser) {
+      return new Response(JSON.stringify({ error: "Unauthorized caller" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const userId = authUser.id;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get the bot settings for this user to get the 'from' number
     const { data: botSettings } = await supabase
