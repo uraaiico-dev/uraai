@@ -8,7 +8,7 @@ serve(async (req) => {
   }
 
   try {
-    const { recipients, message } = await req.json();
+    const { recipients, message, imageUrl, buttonText, buttonUrl } = await req.json();
     
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0 || !message) {
       return new Response(JSON.stringify({ error: "Missing recipients array or message" }), {
@@ -44,10 +44,10 @@ serve(async (req) => {
     const userId = authUser.id;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get the bot settings for this user to get the 'from' number
+    // Get the bot settings for this user
     const { data: botSettings } = await supabase
       .from("bot_settings")
-      .select("wa_phone_number")
+      .select("wa_phone_number, meta_phone_id, meta_access_token")
       .eq("user_id", userId)
       .single();
 
@@ -98,7 +98,6 @@ serve(async (req) => {
     }
 
     const fromNumber = `whatsapp:${botSettings.wa_phone_number.replace('whatsapp:', '')}`;
-    
     const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
     
@@ -106,42 +105,108 @@ serve(async (req) => {
     let failCount = 0;
 
     for (const to of recipients) {
-      const toNumber = `whatsapp:${to.replace('whatsapp:', '')}`;
-      const data = new URLSearchParams();
-      data.append("To", toNumber);
-      data.append("From", fromNumber);
-      data.append("Body", message);
+      const cleanTo = to.replace('whatsapp:', '').trim();
+      let isSuccess = false;
 
-      try {
-        const twilioRes = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              Authorization: "Basic " + btoa(`${accountSid}:${authToken}`),
-            },
-            body: data,
-          }
-        );
-
-        if (twilioRes.ok) {
-          successCount++;
-          // Save outbound log
-          await supabase.from("whatsapp_logs").insert({
-            user_id: userId,
-            direction: "outbound",
-            from_number: botSettings.wa_phone_number.replace('whatsapp:', ''),
-            to_number: to.replace('whatsapp:', ''),
-            message_body: message,
-            ai_reply: "",
-            status: "sent"
-          });
+      if (botSettings.meta_phone_id && botSettings.meta_access_token) {
+        let metaPayload: any;
+        if (buttonUrl) {
+          metaPayload = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: cleanTo,
+            type: "interactive",
+            interactive: {
+              type: "cta_url",
+              header: imageUrl ? {
+                type: "image",
+                image: { link: imageUrl }
+              } : undefined,
+              body: { text: message },
+              action: {
+                name: "cta_url",
+                parameters: {
+                  display_text: buttonText || "Check Details",
+                  url: buttonUrl
+                }
+              }
+            }
+          };
+        } else if (imageUrl) {
+          metaPayload = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: cleanTo,
+            type: "image",
+            image: {
+              link: imageUrl,
+              caption: message
+            }
+          };
         } else {
-          failCount++;
+          metaPayload = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: cleanTo,
+            type: "text",
+            text: { body: message }
+          };
         }
-      } catch (err) {
-        console.error("Broadcast failed for", to, err);
+
+        try {
+          const metaRes = await fetch(
+            `https://graph.facebook.com/v19.0/${botSettings.meta_phone_id}/messages`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${botSettings.meta_access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(metaPayload),
+            }
+          );
+          if (metaRes.ok) isSuccess = true;
+        } catch (mErr) {
+          console.error("Meta broadcast error:", mErr);
+        }
+      } else {
+        const toNumber = `whatsapp:${cleanTo}`;
+        const data = new URLSearchParams();
+        data.append("To", toNumber);
+        data.append("From", fromNumber);
+        data.append("Body", message);
+        if (imageUrl) data.append("MediaUrl", imageUrl);
+
+        try {
+          const twilioRes = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: "Basic " + btoa(`${accountSid}:${authToken}`),
+              },
+              body: data,
+            }
+          );
+          if (twilioRes.ok) isSuccess = true;
+        } catch (tErr) {
+          console.error("Twilio broadcast error:", tErr);
+        }
+      }
+
+      if (isSuccess) {
+        successCount++;
+        await supabase.from("whatsapp_logs").insert({
+          user_id: userId,
+          direction: "outbound",
+          from_number: botSettings.wa_phone_number.replace('whatsapp:', ''),
+          to_number: cleanTo,
+          message_body: message,
+          ai_reply: "",
+          status: "sent"
+        });
+      } else {
         failCount++;
       }
     }

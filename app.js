@@ -2601,6 +2601,9 @@ document.getElementById('btn-send-broadcast')?.addEventListener('click', async (
   const select = document.getElementById('broadcast-recipients');
   const recipients = Array.from(select.selectedOptions).map(opt => opt.value);
   const message = document.getElementById('broadcast-message').value.trim();
+  const imageUrl = document.getElementById('broadcast-image-url')?.value.trim() || '';
+  const buttonText = document.getElementById('broadcast-button-text')?.value.trim() || '';
+  const buttonUrl = document.getElementById('broadcast-button-url')?.value.trim() || '';
   const statusEl = document.getElementById('broadcast-status');
   
   if (recipients.length === 0 || !message) {
@@ -2615,10 +2618,13 @@ document.getElementById('btn-send-broadcast')?.addEventListener('click', async (
   statusEl.innerText = '';
   
   try {
-    const res = await sendBroadcastMessage(state.userProfile.supabaseId, recipients, message);
+    const res = await sendBroadcastMessage(state.userProfile.supabaseId, recipients, message, imageUrl, buttonText, buttonUrl);
     statusEl.innerText = `Success! Sent to ${res.successCount} contacts. Failed: ${res.failCount}`;
     statusEl.style.color = 'var(--green)';
     document.getElementById('broadcast-message').value = '';
+    if (document.getElementById('broadcast-image-url')) document.getElementById('broadcast-image-url').value = '';
+    if (document.getElementById('broadcast-button-text')) document.getElementById('broadcast-button-text').value = '';
+    if (document.getElementById('broadcast-button-url')) document.getElementById('broadcast-button-url').value = '';
     select.selectedIndex = -1;
   } catch (e) {
     statusEl.innerText = 'Broadcast failed: ' + e.message;

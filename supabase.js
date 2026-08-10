@@ -341,9 +341,9 @@ async function getInboxContacts(userId) {
 }
 // ─── BROADCAST & SIMULATOR FUNCTIONS ───
 
-async function sendBroadcastMessage(userId, recipients, message) {
+async function sendBroadcastMessage(userId, recipients, message, imageUrl, buttonText, buttonUrl) {
   const { data, error } = await db.functions.invoke('twilio-broadcast', {
-    body: { recipients, message, userId }
+    body: { recipients, message, imageUrl, buttonText, buttonUrl }
   });
   if (error) throw error;
   return data;

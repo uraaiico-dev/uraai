@@ -636,9 +636,23 @@
                 <!-- Populated dynamically -->
               </select>
             </div>
-            <div class="field-group" style="margin-bottom:24px;">
-              <label style="font-weight:600; color:var(--ink-70);">Promotional Message</label>
-              <textarea id="broadcast-message" class="field" style="height:140px; border-radius:12px; background:rgba(241,245,249,0.5); padding:16px;" placeholder="Hey there! Get 20% off this weekend..."></textarea>
+            <div class="field-group" style="margin-bottom:20px;">
+              <label style="font-weight:600; color:var(--ink-70);">Promotional Message Body</label>
+              <textarea id="broadcast-message" class="field" style="height:120px; border-radius:12px; background:rgba(241,245,249,0.5); padding:14px;" placeholder="Action Required: Buy 1 Get 1 FREE is ending soon..."></textarea>
+            </div>
+            <div class="field-group" style="margin-bottom:16px;">
+              <label style="font-weight:600; color:var(--ink-70);">🖼️ Banner Image URL (Optional)</label>
+              <input type="text" id="broadcast-image-url" class="field" placeholder="https://example.com/offer-banner.jpg" style="border-radius:12px; background:rgba(241,245,249,0.5);">
+            </div>
+            <div class="field-group" style="margin-bottom:24px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div>
+                <label style="font-weight:600; color:var(--ink-70);">🔘 Button Text (Optional)</label>
+                <input type="text" id="broadcast-button-text" class="field" placeholder="Check Details" style="border-radius:12px; background:rgba(241,245,249,0.5);">
+              </div>
+              <div>
+                <label style="font-weight:600; color:var(--ink-70);">🔗 Button Link URL (Optional)</label>
+                <input type="text" id="broadcast-button-url" class="field" placeholder="https://yourshop.com/offer" style="border-radius:12px; background:rgba(241,245,249,0.5);">
+              </div>
             </div>
             <button class="btn-primary" id="btn-send-broadcast" style="width:100%; height:54px; border-radius:27px; font-size:16px; background:linear-gradient(135deg, var(--primary), #a855f7); box-shadow:0 8px 24px rgba(99,102,241,0.4);">Blast Message 🚀</button>
             <p id="broadcast-status" style="margin-top:16px; font-size:14px; text-align:center; font-weight:500;"></p>
