@@ -19,9 +19,15 @@ try {
 // ─── AUTH FUNCTIONS ───
 
 // Sign up new user
-async function authSignUp(email, password) {
+async function authSignUp(email, password, userMetadata = {}) {
   if (!db) throw new Error("Supabase is not configured.");
-  const { data, error } = await db.auth.signUp({ email, password });
+  const { data, error } = await db.auth.signUp({
+    email,
+    password,
+    options: {
+      data: userMetadata
+    }
+  });
   if (error) throw error;
   return data;
 }

@@ -1016,21 +1016,36 @@ async function handleSignUpSubmit() {
     return false;
   }
 
+  const btn = document.getElementById('su-btn-submit');
+
   try {
-    // Show loading state
-    const btn = document.getElementById('su-btn-submit');
-    btn.classList.add('loading');
-    btn.disabled = true;
+    if (btn) {
+      btn.classList.add('loading');
+      btn.disabled = true;
+    }
 
-    // 1. Create auth account in Supabase
-    const authData = await authSignUp(email, password);
-    const userId = authData.user.id;
-
-    // 2. Save profile to users table
-    await saveUserProfile(userId, {
-      fullName, email, phone,
-      businessName, businessType, city, plan: 'starter'
+    // 1. Create auth account in Supabase with metadata
+    const authData = await authSignUp(email, password, {
+      full_name: fullName,
+      business_name: businessName,
+      phone: phone,
+      business_type: businessType,
+      city: city
     });
+
+    const userId = authData?.user?.id;
+
+    if (userId) {
+      // 2. Save profile to users table (safely)
+      try {
+        await saveUserProfile(userId, {
+          fullName, email, phone,
+          businessName, businessType, city, plan: 'starter'
+        });
+      } catch (dbErr) {
+        console.warn("Users table save warning:", dbErr);
+      }
+    }
 
     // 3. Update local state
     state.userProfile.fullName = fullName;
@@ -1039,23 +1054,41 @@ async function handleSignUpSubmit() {
     state.userProfile.businessName = businessName;
     state.userProfile.businessType = businessType;
     state.userProfile.city = city;
-    state.userProfile.supabaseId = userId;
+    if (userId) state.userProfile.supabaseId = userId;
+    state.userProfile.loggedIn = true;
 
     addLog('system', `Account created in Supabase: ${email}`, 'success');
 
-    // 4. Continue to profile setup
-    btn.innerText = 'Continue to Profile Setup →';
-    btn.disabled = false;
+    if (btn) {
+      btn.innerText = 'Continue to Profile Setup →';
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
     closeAuthModal();
-    document.getElementById('prof-wanumber').value = phone;
-    document.getElementById('prof-email').value = email;
-    setTimeout(() => openProfileModal(), 300);
+
+    const wanum = document.getElementById('prof-wanumber');
+    const profEmail = document.getElementById('prof-email');
+    if (wanum) wanum.value = phone;
+    if (profEmail) profEmail.value = email;
+
+    document.body.classList.add('app-logged-in');
+
+    const landing = document.getElementById('landing-page-root');
+    const appRoot = document.getElementById('app-root');
+    if (landing) landing.style.display = 'none';
+    if (appRoot) appRoot.style.display = 'flex';
+
+    syncUI();
+    navigateTo('dashboard');
     return true;
   } catch (err) {
     showAuthInlineError(err.message || 'Signup failed.');
     const btn = document.getElementById('su-btn-submit');
-    btn.classList.remove('loading');
-    btn.disabled = false;
+    if (btn) {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.innerText = 'Create Account 🚀';
+    }
     return false;
   }
 }
@@ -1071,18 +1104,30 @@ async function handleLogInSubmit() {
     return false;
   }
 
+  const btn = document.getElementById('li-btn-submit');
+
   try {
-    const btn = document.getElementById('li-btn-submit');
-    btn.classList.add('loading');
-    btn.disabled = true;
+    if (btn) {
+      btn.classList.add('loading');
+      btn.disabled = true;
+    }
 
     // 1. Auth with Supabase
     const authData = await authLogIn(email, password);
+    if (!authData || !authData.user) {
+      throw new Error("Invalid login credentials");
+    }
     const userId = authData.user.id;
 
-    // 2. Load profile from database
-    const profile = await getUserProfile(userId);
-    const botSettings = await getBotSettings(userId);
+    // 2. Load profile from database (safely)
+    let profile = null;
+    let botSettings = null;
+    try {
+      profile = await getUserProfile(userId);
+      botSettings = await getBotSettings(userId);
+    } catch (dbErr) {
+      console.warn("Profile load warning:", dbErr);
+    }
 
     // 3. Load into state with fallbacks
     const resolvedEmail = profile?.email || authData.user?.email || email;
@@ -1098,8 +1143,8 @@ async function handleLogInSubmit() {
     state.userProfile.businessType = resolvedType;
     state.userProfile.teamRole = profile?.team_role || 'admin';
     
-    let activePlan = profile.plan || 'starter';
-    if (profile.subscription_end_date) {
+    let activePlan = profile?.plan || 'starter';
+    if (profile?.subscription_end_date) {
       const subEnd = new Date(profile.subscription_end_date);
       if (new Date() > subEnd) {
         activePlan = 'starter';
@@ -1108,9 +1153,9 @@ async function handleLogInSubmit() {
     state.currentPlan = activePlan;
 
     if (botSettings) {
-      state.welcomeMessage = botSettings.welcome_message;
-      state.openTime = botSettings.open_time;
-      state.closeTime = botSettings.close_time;
+      state.welcomeMessage = botSettings.welcome_message || `வணக்கம்! Welcome to ${resolvedBiz}.\nHow can I help you today?`;
+      state.openTime = botSettings.open_time || '9:00 AM';
+      state.closeTime = botSettings.close_time || '8:00 PM';
       state.languages = botSettings.languages || ['english'];
       state.businessKnowledge = botSettings.business_knowledge || '';
       menuItemsData = botSettings.menu_items || [];
@@ -1123,32 +1168,35 @@ async function handleLogInSubmit() {
     }
 
     if (!botSettings || !botSettings.welcome_message) {
-      state.welcomeMessage = `வணக்கம்! Welcome to ${profile.business_name}.\nHow can I help you today?`;
+      state.welcomeMessage = `வணக்கம்! Welcome to ${resolvedBiz}.\nHow can I help you today?`;
     }
 
     // Load actual dashboard stats
     try {
       const statsData = await getDashboardStats(userId);
       if (statsData) {
-        state.stats.repliesToday = statsData.replies;
-        state.stats.leadsSaved = statsData.leads;
-        state.stats.avgResponse = statsData.avgTime;
-        state.stats.satisfaction = statsData.satisfaction;
+        state.stats.repliesToday = statsData.replies || 0;
+        state.stats.leadsSaved = statsData.leads || 0;
+        state.stats.avgResponse = statsData.avgTime || '2.1';
+        state.stats.satisfaction = statsData.satisfaction || '98';
       }
     } catch (e) {
       console.warn("Failed to load dashboard stats", e);
     }
 
-    addLog('system', `Login success. Loaded profile for ${profile.full_name}`, 'success');
+    addLog('system', `Login success. Loaded profile for ${resolvedName}`, 'success');
 
-    btn.innerText = 'Access Dashboard →';
-    btn.disabled = false;
+    if (btn) {
+      btn.innerText = 'Access Dashboard →';
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
     closeAuthModal();
     document.body.classList.add('app-logged-in');
 
     // Set WhatsApp connection state from database
-    state.channels.whatsapp = profile.wa_connected || false;
-    state.userProfile.waConnected = profile.wa_connected || false;
+    state.channels.whatsapp = profile?.wa_connected || false;
+    state.userProfile.waConnected = profile?.wa_connected || false;
     restoreWhatsAppConnectionState();
 
     syncUI();
@@ -1156,19 +1204,30 @@ async function handleLogInSubmit() {
     updateWhatsAppChips();
 
     // Reset WhatsApp first message bubble
-    document.getElementById('wa-first-received-bubble').innerHTML = `
-      <div class="wa-msg-badge">⚡ Uraai Bot</div>
-      ${state.welcomeMessage.replace(/\n/g, '<br>')}
-      <div class="wa-msg-meta"><span>09:41 AM</span></div>
-    `;
+    const firstBubble = document.getElementById('wa-first-received-bubble');
+    if (firstBubble) {
+      firstBubble.innerHTML = `
+        <div class="wa-msg-badge">⚡ Uraai Bot</div>
+        ${state.welcomeMessage.replace(/\n/g, '<br>')}
+        <div class="wa-msg-meta"><span>09:41 AM</span></div>
+      `;
+    }
+
+    const landing = document.getElementById('landing-page-root');
+    const appRoot = document.getElementById('app-root');
+    if (landing) landing.style.display = 'none';
+    if (appRoot) appRoot.style.display = 'flex';
 
     navigateTo('dashboard');
     return true;
   } catch (err) {
     showAuthInlineError(err.message || 'Login failed.');
     const btn = document.getElementById('li-btn-submit');
-    btn.classList.remove('loading');
-    btn.disabled = false;
+    if (btn) {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.innerText = 'Log In →';
+    }
     return false;
   }
 }
