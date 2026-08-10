@@ -2158,6 +2158,23 @@ async function saveManualMetaSetup() {
           wa_phone_number: waPhone
         })
         .eq('id', state.userProfile.supabaseId);
+
+      // Attempt to register number with Meta Cloud API if unregistered
+      try {
+        await fetch(`https://graph.facebook.com/v20.0/${phoneId}/register`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            pin: '123456'
+          })
+        });
+      } catch (e) {
+        console.warn('Auto-register phone attempt:', e);
+      }
     }
 
     state.channels.whatsapp = true;

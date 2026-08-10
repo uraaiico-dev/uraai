@@ -48,6 +48,25 @@ serve(async (req) => {
     const phoneNumberId = phoneData.data[0].id;
     const displayPhoneNumber = phoneData.data[0].display_phone_number;
 
+    // 2.5 Register Phone Number on Meta Cloud API (creates Cloud API account if not yet registered)
+    try {
+      const regResponse = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/register`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          pin: '123456'
+        })
+      });
+      const regData = await regResponse.json();
+      console.log("Cloud API /register response:", regData);
+    } catch (regErr) {
+      console.error("Cloud API /register fetch error:", regErr);
+    }
+
     // 3. Save to bot_settings
     await supabase
       .from('bot_settings')
