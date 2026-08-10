@@ -368,9 +368,9 @@ async function getChatHistory(userId, contactPhone) {
   return data || [];
 }
 
-async function sendWhatsAppMessage(userId, toPhone, message) {
-  const { data, error } = await db.functions.invoke('twilio-send', {
-    body: { to: toPhone, message: message, userId: userId }
+async function sendWhatsAppMessage(toPhone, message) {
+  const { data, error } = await db.functions.invoke('send-whatsapp', {
+    body: { to_number: toPhone, message_body: message }
   });
   if (error) throw error;
   return data;
