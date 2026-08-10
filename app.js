@@ -457,6 +457,9 @@ function syncUI() {
   const bizInput = document.getElementById('settings-business-name');
   if (bizInput && state.userProfile.businessName) bizInput.value = state.userProfile.businessName;
 
+  const typeSelect = document.getElementById('settings-business-type');
+  if (typeSelect && state.userProfile.businessType) typeSelect.value = state.userProfile.businessType;
+
   // Sync Desktop Sidebar Profile Info
   const sidebarAvatar = document.getElementById('sidebar-avatar-circle');
   if (sidebarAvatar) sidebarAvatar.innerText = initial;
@@ -2409,8 +2412,26 @@ const AI_TONE_Q = {
 };
 
 function getAIQuestions() {
-  const bizType = state.userProfile.businessType || 'default';
-  const qs = AI_BUSINESS_QUESTIONS[bizType] || AI_BUSINESS_QUESTIONS['default'];
+  const rawType = (state.userProfile.businessType || state.userProfile.businessCategory || '').toLowerCase();
+  
+  let key = 'default';
+  if (rawType.includes('salon') || rawType.includes('beauty') || rawType.includes('spa')) {
+    key = 'Salon & Beauty';
+  } else if (rawType.includes('clinic') || rawType.includes('hospital') || rawType.includes('doctor')) {
+    key = 'Clinic / Hospital';
+  } else if (rawType.includes('gym') || rawType.includes('fitness')) {
+    key = 'Gym / Fitness';
+  } else if (rawType.includes('coaching') || rawType.includes('tuition') || rawType.includes('class')) {
+    key = 'Coaching Center';
+  } else if (rawType.includes('restaurant') || rawType.includes('food') || rawType.includes('cafe')) {
+    key = 'Restaurant / Food';
+  } else if (rawType.includes('hotel') || rawType.includes('stay') || rawType.includes('resort')) {
+    key = 'Hotel & Stay';
+  } else if (rawType.includes('real') || rawType.includes('estate') || rawType.includes('pg') || rawType.includes('hostel')) {
+    key = 'Real Estate / PG';
+  }
+
+  const qs = AI_BUSINESS_QUESTIONS[key] || AI_BUSINESS_QUESTIONS['default'];
   return [...qs, AI_BOOKING_REQS_Q, AI_PAYMENT_METHODS_Q, AI_LOCATION_Q, AI_TONE_Q, AI_FINAL_Q];
 }
 
@@ -2623,6 +2644,7 @@ async function initCRM() {
 document.getElementById('save-changes-btn')?.addEventListener('click', async () => {
   const newFullName = document.getElementById('settings-user-fullname')?.value.trim();
   const newBusinessName = document.getElementById('settings-business-name')?.value.trim();
+  const newType = document.getElementById('settings-business-type')?.value;
   const welcomeMsg = document.getElementById('welcome-msg-input')?.value.trim();
 
   const btn = document.getElementById('save-changes-btn');
@@ -2633,20 +2655,19 @@ document.getElementById('save-changes-btn')?.addEventListener('click', async () 
 
   try {
     if (state.userProfile.supabaseId) {
-      if (newFullName || newBusinessName) {
-        if (newFullName) state.userProfile.fullName = newFullName;
-        if (newBusinessName) state.userProfile.businessName = newBusinessName;
+      if (newFullName) state.userProfile.fullName = newFullName;
+      if (newBusinessName) state.userProfile.businessName = newBusinessName;
+      if (newType) state.userProfile.businessType = newType;
 
-        await saveUserProfile(state.userProfile.supabaseId, {
-          fullName: state.userProfile.fullName,
-          email: state.userProfile.email,
-          phone: state.userProfile.phone || '',
-          businessName: state.userProfile.businessName,
-          businessType: state.userProfile.businessType || 'Local Business',
-          city: state.userProfile.city || 'Chennai',
-          plan: state.currentPlan
-        });
-      }
+      await saveUserProfile(state.userProfile.supabaseId, {
+        fullName: state.userProfile.fullName,
+        email: state.userProfile.email,
+        phone: state.userProfile.phone || '',
+        businessName: state.userProfile.businessName,
+        businessType: state.userProfile.businessType || 'Local Business',
+        city: state.userProfile.city || 'Chennai',
+        plan: state.currentPlan
+      });
 
       if (welcomeMsg) {
         state.welcomeMessage = welcomeMsg;
@@ -2656,8 +2677,13 @@ document.getElementById('save-changes-btn')?.addEventListener('click', async () 
           .eq('user_id', state.userProfile.supabaseId);
       }
 
+      // Refresh AI Setup Questions for new Industry Category
+      if (typeof aiRestart === 'function') {
+        aiRestart();
+      }
+
       syncUI();
-      triggerNotification('Success', 'Profile and bot settings saved!');
+      triggerNotification('Success', 'Profile, industry category, and bot settings saved!');
     }
   } catch (err) {
     triggerNotification('Error', 'Failed to save profile: ' + err.message);

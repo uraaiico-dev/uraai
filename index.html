@@ -667,7 +667,7 @@
             <div class="builder-left-settings">
               <div class="form-block" style="background: rgba(99,102,241,0.04); border: 1px solid rgba(99,102,241,0.15); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
                 <label style="font-weight: 700; color: var(--violet); margin-bottom: 8px;">👤 Account & Business Profile</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 4px;">
                   <div>
                     <label style="font-size: 12px; color: var(--ink-60);">Your Full Name</label>
                     <input type="text" class="field" id="settings-user-fullname" placeholder="e.g. Rahul Sharma" style="border-radius: 8px;">
@@ -675,6 +675,19 @@
                   <div>
                     <label style="font-size: 12px; color: var(--ink-60);">Business Name</label>
                     <input type="text" class="field" id="settings-business-name" placeholder="e.g. Royal Fitness Gym" style="border-radius: 8px;">
+                  </div>
+                  <div>
+                    <label style="font-size: 12px; color: var(--ink-60);">Industry Category</label>
+                    <select class="field" id="settings-business-type" style="border-radius: 8px; background:#fff; height:42px;">
+                      <option value="Gym & Fitness">Gym & Fitness 🏋️</option>
+                      <option value="Hotel & Stay">Hotel & Stay 🏨</option>
+                      <option value="Clinic / Hospital">Clinic / Hospital 🩺</option>
+                      <option value="Salon & Beauty">Salon & Beauty 💇</option>
+                      <option value="Restaurant / Food">Restaurant / Food 🍽️</option>
+                      <option value="Real Estate / PG">Real Estate / PG 🏠</option>
+                      <option value="Coaching Center">Coaching Center 📚</option>
+                      <option value="default">General Business 💼</option>
+                    </select>
                   </div>
                 </div>
               </div>
