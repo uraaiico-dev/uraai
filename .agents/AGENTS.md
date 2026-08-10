@@ -45,7 +45,24 @@
 - **Database & Cloud Deployment Status:**
   - Executed `schema_update_niche.sql` in Supabase SQL Editor (`Success`). Columns `business_category`, `primary_goal`, `niche_config`, `lead_score`, `intent_label` and index `idx_leads_intent` on `public.leads` are active.
   - Deployed all 6 Edge Functions (`meta-webhook`, `send-whatsapp`, `exchange-meta-token`, `chat-simulator`, `twilio-send`, `twilio-broadcast`) to Supabase Cloud (`fmqgxctgowrpepbnccwq`).
-  - Pushed all commits to `main` branch on GitHub (`caa4893`) for Vercel deployment to `https://uraai.in`.
+  - Pushed all commits to `main` branch on GitHub (`3acae2c`) for Vercel deployment to `https://uraai.in`.
+- **Rich Offer Mass Broadcasts (Meta Interactive CTA Cards & Banners):**
+  - Upgraded Mass Broadcast UI in `index.html` & `app.js` with optional Banner Image URL, CTA Button Label, and CTA Button Link fields.
+  - Upgraded `twilio-broadcast` Edge Function to send Meta Graph API **Interactive `cta_url` Cards** (`type: "interactive"`, `header: image`, `action: cta_url`) rendering native clickable buttons (`Check Details` / `Shop Now`) directly in WhatsApp.
+- **All-Inclusive Pricing & Unit Economics Breakdown:**
+  - **Gemini Flash 1.5/2.0 AI cost:** ~₹0.005 per AI reply (₹25 for 5,000 replies).
+  - **Meta WhatsApp API India rate:** ~₹0.78 per marketing broadcast (first 1,000 service chats/mo are 100% FREE from Meta).
+  - **Pro Plan (₹1,999/mo):** All-in cost ~₹435 $\rightarrow$ **₹1,564 Net Profit / month (78.2% Profit Margin)**.
+  - **Max Plan (₹3,999/mo):** All-in cost ~₹2,500 $\rightarrow$ **₹1,499 Net Profit / month (37.5% Profit Margin)**.
+  - **All-Inclusive Strategy:** Uraai covers Meta bills inside the fixed monthly plan fees for standard SMBs, removing 90% of onboarding friction in India.
+- **UI Layout, Header & Profile Fixes:**
+  - **Subpixel Top White Gap Bug Fix:** Added `html { background: #060609 !important; margin: 0; padding: 0; }` and zeroed top margins on `.header-nav` to eliminate browser subpixel top white lines.
+  - **Profile Resolution & Auto-Healing:** Updated `getUserProfile()` with `.maybeSingle()` to prevent null pointer crashes. Resolved full name & business name from `users.full_name`, `auth.user_metadata`, or email prefix (e.g. `sanjay@gmail.com` $\rightarrow$ `Sanjay`). Auto-heals missing database rows.
+  - **Account & Business Profile Settings:** Added **👤 Your Full Name**, **🏢 Business Name**, and **Industry Category** dropdown inside Bot Builder (`#bot_builder`). Real-time syncs with sidebar avatar badge upon clicking **Save changes**.
+- **AI Setup Fuzzy Category Matching:**
+  - Updated `getAIQuestions()` in `app.js` with smart fuzzy category matching (`rawType.includes('hotel')` $\rightarrow$ `'Hotel & Stay'`, `rawType.includes('real')` $\rightarrow$ `'Real Estate / PG'`, `rawType.includes('gym')` $\rightarrow$ `'Gym & Fitness'`, etc.). Switching Industry Category reloads the exact niche questions automatically.
+- **Authentication Hardening:**
+  - Fixed `handleLogInSubmit` and `handleSignUpSubmit` in `app.js` with null-safe optional chaining and metadata injection (`options.data`) in `authSignUp()`. Solved frozen login and sign-up states.
 
 ### Go-To-Market & Sales Strategy
 - **The Biggest Risk (80% failure point):** The technology is solid, but the business will fail if we cannot solve the Meta API onboarding friction and local sales resistance. 
