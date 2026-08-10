@@ -25,14 +25,23 @@
   --r-xl: 28px;
 }
 
+html {
+  background: #060609 !important;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Inter', sans-serif;
-  background: #060609;
+  background: #060609 !important;
   min-height: 100vh;
   color: #fff;
   overflow-x: hidden;
   position: relative;
   scroll-behavior: smooth;
+  margin: 0;
+  padding: 0;
 }
 
 /* Background glowing decorative orbs */
@@ -66,8 +75,10 @@ body {
 .header-nav {
   position: sticky;
   top: 0;
+  margin-top: 0;
+  border-top: none;
   width: 100%;
-  background: rgba(6, 6, 9, 0.8);
+  background: rgba(6, 6, 9, 0.85);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 1000;
