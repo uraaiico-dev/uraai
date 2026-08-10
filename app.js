@@ -2315,6 +2315,18 @@ const AI_BUSINESS_QUESTIONS = {
     { q: "Popular dish and price range? 💰", label: "Prices", placeholder: "e.g. Biryani ₹120, Meals ₹80", chips: ["Share menu price", "Budget-friendly", "Premium dining"] },
     { q: "Bulk orders or special offers? 🎁\n(Type 'skip' if none)", label: "Offers", placeholder: "e.g. Party orders, corporate lunch", chips: ["Bulk order", "No special offers", "Skip"] }
   ],
+  'Hotel & Stay': [
+    { q: "What types of rooms or stays do you offer? 🏨", label: "Room Types", placeholder: "e.g. Standard AC, Deluxe Suite, Dormitory", chips: ["Deluxe & Suite", "Standard AC", "Homestay / Villa"] },
+    { q: "What are your check-in and check-out times? 🕒", label: "Timings", placeholder: "e.g. Check-in 12 PM, Check-out 11 AM", chips: ["12 PM Check-in", "24hr flexi check-in"] },
+    { q: "What are your room rates per night? 💰", label: "Rates", placeholder: "e.g. Deluxe ₹2,500/night, Suite ₹4,500/night", chips: ["Starting ₹1,500", "Share price list"] },
+    { q: "What amenities are included? 🏊", label: "Amenities", placeholder: "e.g. Free WiFi, Breakfast, Pool, Parking", chips: ["WiFi & Breakfast", "Pool & Parking", "All inclusive"] }
+  ],
+  'Real Estate / PG': [
+    { q: "What rooms or properties do you offer? 🏠", label: "Properties", placeholder: "e.g. Gents PG single/double sharing, 2BHK flat", chips: ["PG Single & Double", "1BHK / 2BHK Flats", "Co-living"] },
+    { q: "What is the monthly rent and deposit? 💰", label: "Rent & Deposit", placeholder: "e.g. Rent ₹8,000/mo, Deposit 1 month", chips: ["₹5,000–₹10,000 range", "1 Month Deposit"] },
+    { q: "What facilities are provided? 📶", label: "Facilities", placeholder: "e.g. 3 meals daily, WiFi, Washing machine, Housekeeping", chips: ["3 Meals + WiFi + Laundry", "Self-cooking available"] },
+    { q: "Can prospective tenants visit for a tour? 🗝️", label: "Visits", placeholder: "e.g. Visits allowed 9 AM - 7 PM daily", chips: ["Daily visits allowed", "Appointment needed"] }
+  ],
   'default': [
     { q: "What are your business timings? 🕐", label: "Timings", placeholder: "e.g. 9am–8pm, Mon–Sat", chips: ["9am–9pm daily", "10am–8pm Mon–Sat"] },
     { q: "What do you offer? 📦", label: "Services", placeholder: "Describe your products or services...", chips: [] },
@@ -2834,10 +2846,20 @@ async function aiFinish() {
   aiTyping = true;
   aiShowTyping();
   const knowledge = aiAnswers.map(a => `${a.label}: ${a.value}`).join('\n');
+  const bizType = state.userProfile.businessType || '';
+  let categoryKey = 'general';
+  if (bizType.includes('Gym')) categoryKey = 'gym';
+  else if (bizType.includes('Hotel') || bizType.includes('Stay')) categoryKey = 'hotel';
+  else if (bizType.includes('Clinic') || bizType.includes('Hospital')) categoryKey = 'clinic';
+  else if (bizType.includes('Salon') || bizType.includes('Beauty')) categoryKey = 'salon';
+  else if (bizType.includes('Restaurant') || bizType.includes('Food')) categoryKey = 'restaurant';
+  else if (bizType.includes('Real Estate') || bizType.includes('PG')) categoryKey = 'realestate';
+
   if (state.userProfile.supabaseId) {
     const { error } = await db.from('bot_settings').upsert({
       user_id: state.userProfile.supabaseId,
       business_knowledge: knowledge,
+      business_category: categoryKey,
       onboarding_complete: true,
       updated_at: new Date().toISOString()
     });
@@ -3009,12 +3031,24 @@ function renderInboxContacts(leads) {
       : '';
       
     const nameStr = lead.customer_name || lead.customer_phone;
+
+    let badgeHtml = '';
+    const label = lead.intent_label || '';
+    if (label.includes('High') || (lead.lead_score && lead.lead_score >= 80)) {
+      badgeHtml = `<span style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid rgba(220,38,38,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">🔥 High Intent</span>`;
+    } else if (label.includes('Pricing')) {
+      badgeHtml = `<span style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid rgba(5,150,105,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">💰 Pricing</span>`;
+    } else if (label.includes('Booking') || label.includes('Visit') || label.includes('Trial')) {
+      badgeHtml = `<span style="background:rgba(59,130,246,0.15); color:#2563eb; border:1px solid rgba(37,99,235,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">📅 Booking</span>`;
+    } else if (label) {
+      badgeHtml = `<span style="background:rgba(107,114,128,0.15); color:#4b5563; border:1px solid rgba(75,85,99,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">${label}</span>`;
+    }
     
     el.innerHTML = `
       <div class="avatar" style="width: 49px; height: 49px; background: #dfe5e7; margin-right: 15px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:20px;">👤</div>
       <div style="flex: 1; border-bottom: 1px solid #f2f2f2; padding: 12px 0; display:flex; flex-direction:column; justify-content:center;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size: 17px; color: #111b21;">${nameStr}</span>
+          <span style="font-size: 16px; color: #111b21; display:flex; align-items:center;">${nameStr} ${badgeHtml}</span>
           <span style="font-size: 12px; color: #8C7DE6;">${timeStr}</span>
         </div>
         <div style="font-size: 14px; color: #8C7DE6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">

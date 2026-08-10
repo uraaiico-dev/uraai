@@ -64,11 +64,23 @@ function renderInboxContacts(leads) {
       
     const nameStr = lead.customer_name || lead.customer_phone;
     
+    let badgeHtml = '';
+    const label = lead.intent_label || '';
+    if (label.includes('High') || (lead.lead_score && lead.lead_score >= 80)) {
+      badgeHtml = `<span style="background:rgba(239,68,68,0.15); color:#dc2626; border:1px solid rgba(220,38,38,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">🔥 High Intent</span>`;
+    } else if (label.includes('Pricing')) {
+      badgeHtml = `<span style="background:rgba(16,185,129,0.15); color:#059669; border:1px solid rgba(5,150,105,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">💰 Pricing</span>`;
+    } else if (label.includes('Booking') || label.includes('Visit') || label.includes('Trial')) {
+      badgeHtml = `<span style="background:rgba(59,130,246,0.15); color:#2563eb; border:1px solid rgba(37,99,235,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">📅 Booking</span>`;
+    } else if (label) {
+      badgeHtml = `<span style="background:rgba(107,114,128,0.15); color:#4b5563; border:1px solid rgba(75,85,99,0.3); font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; margin-left:6px;">${label}</span>`;
+    }
+
     el.innerHTML = `
       <div class="avatar" style="width: 49px; height: 49px; background: #dfe5e7; margin-right: 15px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:20px;">👤</div>
       <div style="flex: 1; border-bottom: 1px solid #f2f2f2; padding: 12px 0; display:flex; flex-direction:column; justify-content:center;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size: 17px; color: #111b21;">${nameStr}</span>
+          <span style="font-size: 16px; color: #111b21; display:flex; align-items:center;">${nameStr} ${badgeHtml}</span>
           <span style="font-size: 12px; color: #667781;">${timeStr}</span>
         </div>
         <div style="font-size: 14px; color: #667781; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">

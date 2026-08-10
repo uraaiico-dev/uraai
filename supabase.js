@@ -146,7 +146,9 @@ async function saveBotSettings(userId, settings) {
       meta_waba_id: settings.metaWabaId,
       meta_phone_id: settings.metaPhoneId,
       meta_access_token: settings.metaAccessToken,
-      menu_items: settings.menuItems
+      menu_items: settings.menuItems,
+      business_category: settings.businessCategory || 'general',
+      primary_goal: settings.primaryGoal || 'general'
     });
   if (error) throw error;
   return data;

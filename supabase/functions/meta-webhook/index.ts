@@ -234,23 +234,63 @@ serve(async (req) => {
     if (isClosed) {
       replyMessage = `We're currently closed. We open at ${open_time}. Please message us then!`;
     } else {
-      const knowledgeBase = botSettings.business_knowledge
-        || (faqData && faqData.length > 0
-          ? faqData.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n')
-          : 'No business information set up yet. Please complete AI Setup.');
+      const category = botSettings.business_category || 'general';
+      
+      let categoryContext = "";
+      if (category === 'gym') {
+        categoryContext = `BUSINESS TYPE: Gym & Fitness Center.
+ROLE: You are the front-desk manager. Help customers with membership plans, gym timings, trainer options, and facility visits.
+GOALS & RULES:
+- Never assume a free trial exists unless explicitly stated in the knowledge base. If not stated, offer a facility tour/visit or membership package details.
+- If the customer agrees to a visit/tour with a clear date and time, append: <ACTION_TAG type="gym_visit" date="YYYY-MM-DD" time="HH:MM" details="Gym Tour Visit">`;
+      } else if (category === 'hotel') {
+        categoryContext = `BUSINESS TYPE: Hotel, Resort, or Homestay.
+ROLE: You are the reservations desk. Help guests check room rates, amenities (WiFi, Pool, Parking, Breakfast), and check-in/out times.
+GOALS & RULES:
+- Ask for check-in/check-out dates and guest count.
+- When check-in date is provided, append: <ACTION_TAG type="room_inquiry" date="YYYY-MM-DD" time="12:00" details="Room Reservation Inquiry">`;
+      } else if (category === 'clinic') {
+        categoryContext = `BUSINESS TYPE: Medical Clinic / Hospital / Dental Care.
+ROLE: You are patient reception. Assist with doctor OPD timings, consultation fees, and appointment slots.
+GOALS & RULES:
+- When date/time and service/doctor are clear, append: <ACTION_TAG type="appointment" date="YYYY-MM-DD" time="HH:MM" details="Doctor Consultation">`;
+      } else if (category === 'salon') {
+        categoryContext = `BUSINESS TYPE: Salon & Spa.
+ROLE: You are a beauty consultant. Help with haircuts, spa packages, service prices, and stylist selection.
+GOALS & RULES:
+- When service, date, and time are clear, append: <ACTION_TAG type="booking" date="YYYY-MM-DD" time="HH:MM" details="Service Booking">`;
+      } else if (category === 'restaurant') {
+        categoryContext = `BUSINESS TYPE: Restaurant / Cafe.
+ROLE: You are hostess. Assist with food menu items, today's specials, and table reservations.
+GOALS & RULES:
+- When party size, date, and time are clear, append: <ACTION_TAG type="table_reservation" date="YYYY-MM-DD" time="HH:MM" details="Table Reservation">`;
+      } else if (category === 'realestate') {
+        categoryContext = `BUSINESS TYPE: Real Estate / PG / Hostel.
+ROLE: You are a leasing consultant. Assist with room sharing options, monthly rent, deposit, meals, and property tour visits.
+GOALS & RULES:
+- When date and time for a visit are clear, append: <ACTION_TAG type="property_tour" date="YYYY-MM-DD" time="HH:MM" details="Property Visit">`;
+      } else {
+        categoryContext = `BUSINESS TYPE: General Business.
+ROLE: Professional customer support sales assistant.
+GOALS & RULES:
+- When date, time, and service are clear, append: <ACTION_TAG type="booking" date="YYYY-MM-DD" time="HH:MM" details="Service Booking">`;
+      }
 
       const systemPrompt = `You are a highly intelligent, professional, and friendly WhatsApp sales assistant for ${business_name}.
+
+${categoryContext}
+
 EVERYTHING YOU KNOW ABOUT THIS BUSINESS:
 ${knowledgeBase}
 
 YOUR ADVANCED RULES:
 1. FOCUS: ONLY answer questions about ${business_name}. If the user asks about politics, religion, completely unrelated topics, or uses abusive language, politely state that you are only here to help with ${business_name} and stop engaging in the unrelated topic.
 2. LANGUAGE: Reply in ${languages?.join(', ') || 'English'} — perfectly match the customer's language and tone.
-3. FORMATTING: Format your messages exactly like a human texts on WhatsApp. Use short paragraphs, use *bold* text for emphasis, and use emojis naturally. Keep it conversational and do not sound like a robot reading an essay.
+3. FORMATTING: Format your messages exactly like a human texts on WhatsApp. Use short paragraphs, use *bold* text for emphasis, and use emojis naturally. Keep it conversational.
 4. HONESTY: NEVER make up prices, timings, or services not explicitly mentioned in your knowledge base. If you don't know something, say 'Please contact us directly for this'.
-5. SALES DRIVEN: If the customer is asking about prices or availability for a service, do not just give them the price and end the conversation. Always end with an engaging question to keep them talking, like 'Would you like me to check our availability for that?'
-6. MISSING INFO: If a customer says 'I want to book' but does not tell you the time or date, do NOT use the <BOOKING> tag yet. Reply politely and ask them what day and time works best for them.
-7. IMPORTANT BOOKING RULE: ONLY when the user has provided a clear date, time, and service for an appointment that aligns with the business hours and knowledge, you MUST secretly include a booking tag at the very end of your response exactly like this: <BOOKING date="YYYY-MM-DD" time="HH:MM" service="Service Name">`;
+5. SALES DRIVEN: If the customer asks about prices or availability, give the details and end with an engaging question to keep them talking.
+6. INTENT SCORING: At the very end of your response, ALWAYS append a secret intent tag like this:
+<INTENT score="90" label="High Intent"> (or "Pricing Inquiry", "Booking Request", "General FAQ")`;
 
       const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
       
@@ -286,28 +326,57 @@ YOUR ADVANCED RULES:
       replyMessage += "\n\n_Powered by Uraai - Build your AI bot today at uraai.com_";
     }
 
-    // ─── 7b. Parse Booking Tags ───
-    let bookingMatch = replyMessage.match(/<BOOKING\s+date="([^"]+)"\s+time="([^"]+)"\s+service="([^"]+)">/);
-    if (bookingMatch) {
-      const bDate = bookingMatch[1];
-      const bTime = bookingMatch[2];
-      const bService = bookingMatch[3];
-      replyMessage = replyMessage.replace(bookingMatch[0], '').trim();
+    // ─── 7b. Parse Secret Intent & Action Tags ───
+    let intentMatch = replyMessage.match(/<INTENT\s+score="([^"]+)"\s+label="([^"]+)">/);
+    let leadScore = 50;
+    let intentLabel = "General FAQ";
+    if (intentMatch) {
+      leadScore = parseInt(intentMatch[1], 10) || 50;
+      intentLabel = intentMatch[2];
+      replyMessage = replyMessage.replace(intentMatch[0], '').trim();
+      
+      // Update customer_leads table with lead_score and intent_label
+      await supabase.from('customer_leads').upsert({
+        user_id: user_id,
+        phone_number: fromNumber,
+        lead_score: leadScore,
+        intent_label: intentLabel,
+        last_contact: new Date().toISOString()
+      }, { onConflict: 'user_id,phone_number' });
+    }
+
+    // ─── 7c. Parse Action / Booking Tags ───
+    let actionMatch = replyMessage.match(/<ACTION_TAG\s+type="([^"]+)"\s+date="([^"]+)"\s+time="([^"]+)"\s+details="([^"]+)">/)
+                   || replyMessage.match(/<BOOKING\s+date="([^"]+)"\s+time="([^"]+)"\s+service="([^"]+)">/);
+    if (actionMatch) {
+      let aType, aDate, aTime, aDetails;
+      if (actionMatch[0].startsWith('<ACTION_TAG')) {
+        aType = actionMatch[1];
+        aDate = actionMatch[2];
+        aTime = actionMatch[3];
+        aDetails = actionMatch[4];
+      } else {
+        aType = 'booking';
+        aDate = actionMatch[1];
+        aTime = actionMatch[2];
+        aDetails = actionMatch[3];
+      }
+      replyMessage = replyMessage.replace(actionMatch[0], '').trim();
       
       const { data: newAppt } = await supabase.from('appointments').insert({
         user_id: user_id,
         customer_phone: fromNumber,
-        service: bService,
-        appointment_date: `${bDate} ${bTime}`,
+        service: `${aType.toUpperCase()}: ${aDetails}`,
+        appointment_date: `${aDate} ${aTime}`,
         status: 'pending'
       }).select().single();
 
-      replyMessage += `\n\nI have requested this time for you. Please wait while the business owner confirms your appointment.`;
+      replyMessage += `\n\nI have submitted this request for you. Our team will confirm shortly!`;
 
       // Send Interactive Message to Owner
       const ownerPhone = user?.wa_phone_number;
       if (ownerPhone && newAppt) {
-        await sendInteractiveBookingMessage(ownerPhone, phoneNumberId, botSettings.meta_access_token, newAppt.id, bService, `${bDate} ${bTime}`, fromNumber);
+        await sendInteractiveBookingMessage(ownerPhone, phoneNumberId, botSettings.meta_access_token, newAppt.id, aDetails, `${aDate} ${aTime}`, fromNumber);
       }
     }
 
