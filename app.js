@@ -2155,16 +2155,19 @@ function launchFacebookEmbeddedSignup() {
   FB.login(function(response) {
     if (response.authResponse && (response.authResponse.accessToken || response.authResponse.code)) {
       const token = response.authResponse.accessToken || response.authResponse.code;
-      console.log('FB Login success, token received');
+      console.log('FB Login success, token/code received:', token);
       handleEmbeddedSignupSuccess(token);
     } else {
       console.log('FB Login response:', response);
     }
   }, {
     config_id: '4551130871834024',
-    scope: 'whatsapp_business_messaging,whatsapp_business_management',
-    response_type: 'token',
-    override_default_response_type: true
+    response_type: 'code',
+    override_default_response_type: true,
+    extras: {
+      feature: 'whatsapp_embedded_signup',
+      setup: {}
+    }
   });
 }
 
