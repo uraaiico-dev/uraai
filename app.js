@@ -630,7 +630,8 @@ function enforcePlanLimitations() {
     state.channels.instagram = false;
     state.channels.email = false;
     state.stats.activeBots = 1;
-    document.getElementById('stat-bots-active').innerText = 1;
+    const statBots = document.getElementById('stat-bots-active');
+    if (statBots) statBots.innerText = 1;
 
     // Block non-english tags visually
     langWrapper.querySelectorAll('.tag').forEach(tag => {
@@ -646,7 +647,8 @@ function enforcePlanLimitations() {
   } else {
     // Pro/Max limits
     state.stats.activeBots = (state.channels.whatsapp ? 1 : 0) + (state.channels.instagram ? 1 : 0) + (state.channels.email ? 1 : 0);
-    document.getElementById('stat-bots-active').innerText = state.stats.activeBots;
+    const statBots = document.getElementById('stat-bots-active');
+    if (statBots) statBots.innerText = state.stats.activeBots;
 
     langWrapper.querySelectorAll('.tag').forEach(tag => {
       tag.classList.remove('disabled-feature');
