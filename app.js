@@ -1469,8 +1469,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).catch(err => console.warn('Profile auto-heal failed:', err));
       }
       
-      let activePlan = profile.plan || 'starter';
-      if (profile.subscription_end_date) {
+      let activePlan = profile?.plan || 'starter';
+      if (profile?.subscription_end_date) {
         const subEnd = new Date(profile.subscription_end_date);
         if (new Date() > subEnd) {
           activePlan = 'starter';
@@ -1479,9 +1479,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       state.currentPlan = activePlan;
 
       if (botSettings) {
-        state.welcomeMessage = botSettings.welcome_message;
-        state.openTime = botSettings.open_time;
-        state.closeTime = botSettings.close_time;
+        state.welcomeMessage = botSettings.welcome_message || state.welcomeMessage;
+        state.openTime = botSettings.open_time || state.openTime;
+        state.closeTime = botSettings.close_time || state.closeTime;
         state.languages = botSettings.languages || ['english'];
         state.businessKnowledge = botSettings.business_knowledge || '';
         menuItemsData = botSettings.menu_items || [];
@@ -1493,8 +1493,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.classList.add('app-logged-in');
 
       // Set WhatsApp connection state from database
-      state.channels.whatsapp = profile.wa_connected || false;
-      state.userProfile.waConnected = profile.wa_connected || false;
+      state.channels.whatsapp = profile?.wa_connected || false;
+      state.userProfile.waConnected = profile?.wa_connected || false;
       restoreWhatsAppConnectionState();
 
       syncUI();
@@ -1502,11 +1502,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateWhatsAppChips();
 
       // Hide landing page, show dashboard
-      document.getElementById('landing-page-root').style.display = 'none';
-      document.getElementById('app-root').style.display = 'flex';
+      const landingPage = document.getElementById('landing-page-root');
+      const mainAppRoot = document.getElementById('app-root');
+      if (landingPage) landingPage.style.display = 'none';
+      if (mainAppRoot) mainAppRoot.style.display = 'flex';
       navigateTo('dashboard');
 
-      addLog('system', `Session restored for: ${profile.full_name}`, 'success');
+      addLog('system', `Session restored for: ${resolvedName}`, 'success');
     } catch (err) {
       addLog('system', 'Session restore failed: ' + err.message, 'default');
     }
@@ -1670,6 +1672,21 @@ async function handleApplyPromoCode() {
 
   const loginSubmit = document.getElementById('li-btn-submit');
   if (loginSubmit) loginSubmit.onclick = handleLogInSubmit;
+
+  // Keydown listener for Enter key inside auth modal
+  const authModalEl = document.getElementById('auth-modal');
+  if (authModalEl) {
+    authModalEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const loginPanel = document.getElementById('form-panel-login');
+        if (loginPanel && loginPanel.style.display !== 'none') {
+          handleLogInSubmit();
+        } else {
+          handleSignUpSubmit();
+        }
+      }
+    });
+  }
 
   const profileSubmit = document.getElementById('prof-btn-submit');
   if (profileSubmit) profileSubmit.onclick = handleProfileSubmit;
