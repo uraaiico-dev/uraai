@@ -133,15 +133,15 @@ async function finishAuthFlow() {
     document.getElementById('su-busname').value = authBotState.data.busname || '';
     document.getElementById('su-city').value = authBotState.data.city || '';
     
-    if (typeof handleSignUpSubmit === 'function') {
-      success = await handleSignUpSubmit();
+    if (typeof window.handleSignUpSubmit === 'function') {
+      success = await window.handleSignUpSubmit();
     }
   } else {
     document.getElementById('li-email').value = authBotState.data.email || '';
     document.getElementById('li-password').value = authBotState.data.password || '';
     
-    if (typeof handleLogInSubmit === 'function') {
-      success = await handleLogInSubmit();
+    if (typeof window.handleLogInSubmit === 'function') {
+      success = await window.handleLogInSubmit();
     }
   }
   

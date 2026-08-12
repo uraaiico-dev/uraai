@@ -1231,11 +1231,14 @@ async function handleLogInSubmit() {
     if (btn) {
       btn.classList.remove('loading');
       btn.disabled = false;
-      btn.innerText = 'Log In →';
+      btn.innerText = 'Log In to Dashboard ➔';
     }
     return false;
   }
 }
+
+window.handleSignUpSubmit = handleSignUpSubmit;
+window.handleLogInSubmit = handleLogInSubmit;
 
 // Complete Profile Onboarding Setup Handler
 function handleProfileSubmit() {
@@ -1730,6 +1733,21 @@ async function handleApplyPromoCode() {
 
   // Global Click Event Handler for CTAs & Auth Triggers
   document.body.addEventListener('click', (e) => {
+    const liSubmitBtn = e.target.closest('#li-btn-submit');
+    const suSubmitBtn = e.target.closest('#su-btn-submit');
+
+    if (liSubmitBtn) {
+      e.preventDefault();
+      handleLogInSubmit();
+      return;
+    }
+
+    if (suSubmitBtn) {
+      e.preventDefault();
+      handleSignUpSubmit();
+      return;
+    }
+
     // Global Header Nav & Hero CTAs Fallback Handler
     const navLoginBtn = e.target.closest('#nav-btn-login');
     const navSignupBtn = e.target.closest('#nav-btn-signup, #hero-btn-start');
