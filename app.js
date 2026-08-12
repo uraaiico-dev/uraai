@@ -2333,17 +2333,18 @@ async function saveManualMetaSetup() {
   }
 
   try {
-    if (state.userProfile.supabaseId) {
-      await supabase
+    const client = typeof db !== 'undefined' ? db : (window.db || window.supabase);
+    if (state.userProfile.supabaseId && client) {
+      await client
         .from('bot_settings')
-        .update({
+        .upsert({
+          user_id: state.userProfile.supabaseId,
           meta_phone_id: phoneId,
           meta_access_token: token,
           wa_phone_number: waPhone
-        })
-        .eq('user_id', state.userProfile.supabaseId);
+        });
 
-      await supabase
+      await client
         .from('users')
         .update({
           wa_access_token: token,

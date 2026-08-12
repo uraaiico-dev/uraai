@@ -12,6 +12,8 @@ const { createClient } = supabase;
 let db;
 try {
   db = createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.db = db;
+  window.supabase = db;
 } catch (e) {
   console.warn("Supabase client failed to initialize. Please configure your SUPABASE_URL and SUPABASE_KEY inside supabase.js.", e);
 }
