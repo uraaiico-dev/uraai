@@ -445,10 +445,14 @@ function syncUI() {
     ? state.userProfile.businessName
     : 'My Business';
 
-  const initial = userFullName.charAt(0).toUpperCase();
-  document.getElementById('dash-user-name').innerText = `${userFullName} 👋`;
-  document.getElementById('dash-avatar-circle').innerText = initial;
-  document.getElementById('builder-business-name-sub').innerText = `${state.userProfile.businessType || 'Business'} — Active`;
+  const dashUserName = document.getElementById('dash-user-name');
+  if (dashUserName) dashUserName.innerText = `${userFullName} 👋`;
+
+  const dashAvatarCircle = document.getElementById('dash-avatar-circle');
+  if (dashAvatarCircle) dashAvatarCircle.innerText = initial;
+
+  const builderBizSub = document.getElementById('builder-business-name-sub');
+  if (builderBizSub) builderBizSub.innerText = `${state.userProfile.businessType || 'Business'} — Active`;
 
   // Pre-fill Profile Settings Inputs
   const nameInput = document.getElementById('settings-user-fullname');
@@ -488,12 +492,23 @@ function syncUI() {
   }
 
   // Stats Counters
-  document.getElementById('stat-replies').innerText = Number(state.stats.repliesToday).toLocaleString();
-  document.getElementById('stat-leads').innerText = state.stats.leadsSaved;
-  document.getElementById('stat-avg-time').innerHTML = `${state.stats.avgResponse}<span style="font-size:14px;font-weight:500">s</span>`;
-  document.getElementById('stat-satisfaction').innerHTML = `${state.stats.satisfaction}<span style="font-size:14px;font-weight:500">%</span>`;
-  document.getElementById('stat-missed').innerText = state.stats.missedChats;
-  document.getElementById('stat-bots-active').innerText = state.stats.activeBots;
+  const statReplies = document.getElementById('stat-replies');
+  if (statReplies) statReplies.innerText = Number(state.stats.repliesToday).toLocaleString();
+
+  const statLeads = document.getElementById('stat-leads');
+  if (statLeads) statLeads.innerText = state.stats.leadsSaved;
+
+  const statAvgTime = document.getElementById('stat-avg-time');
+  if (statAvgTime) statAvgTime.innerHTML = `${state.stats.avgResponse}<span style="font-size:14px;font-weight:500">s</span>`;
+
+  const statSatisfaction = document.getElementById('stat-satisfaction');
+  if (statSatisfaction) statSatisfaction.innerHTML = `${state.stats.satisfaction}<span style="font-size:14px;font-weight:500">%</span>`;
+
+  const statMissed = document.getElementById('stat-missed');
+  if (statMissed) statMissed.innerText = state.stats.missedChats;
+
+  const statBotsActive = document.getElementById('stat-bots-active');
+  if (statBotsActive) statBotsActive.innerText = state.stats.activeBots;
 
   // Limit Notification Bar Logic
   const limitBar = document.getElementById('limit-notification-bar');
@@ -509,12 +524,23 @@ function syncUI() {
   updateWhatsAppChannelCard(state.channels.whatsapp);
 
   // 2. Bot Builder Data
-  document.getElementById('welcome-msg-input').value = state.welcomeMessage;
-  document.getElementById('open-time-input').value = state.openTime;
-  document.getElementById('close-time-input').value = state.closeTime;
-  document.getElementById('meta-waba-id').value = state.userProfile.metaWabaId || '';
-  document.getElementById('meta-phone-id').value = state.userProfile.metaPhoneId || '';
-  document.getElementById('meta-access-token').value = state.userProfile.metaAccessToken || '';
+  const welcomeInput = document.getElementById('welcome-msg-input');
+  if (welcomeInput) welcomeInput.value = state.welcomeMessage;
+
+  const openTimeInput = document.getElementById('open-time-input');
+  if (openTimeInput) openTimeInput.value = state.openTime;
+
+  const closeTimeInput = document.getElementById('close-time-input');
+  if (closeTimeInput) closeTimeInput.value = state.closeTime;
+
+  const metaWabaIdInput = document.getElementById('meta-waba-id');
+  if (metaWabaIdInput) metaWabaIdInput.value = state.userProfile.metaWabaId || '';
+
+  const metaPhoneIdInput = document.getElementById('meta-phone-id');
+  if (metaPhoneIdInput) metaPhoneIdInput.value = state.userProfile.metaPhoneId || '';
+
+  const metaTokenInput = document.getElementById('meta-access-token');
+  if (metaTokenInput) metaTokenInput.value = state.userProfile.metaAccessToken || '';
 
   // Sync Languages Tags
   document.querySelectorAll('#lang-tag-row .tag').forEach(tag => {
@@ -568,8 +594,11 @@ function syncUI() {
   });
 
   // 4. Customer Chat WhatsApp details sync
-  document.getElementById('wa-avatar-char').innerText = state.userProfile.businessName.charAt(0).toUpperCase();
-  document.getElementById('wa-header-business-name').innerHTML = `${state.userProfile.businessName} <span class="wa-business-verified">✓</span>`;
+  const waAvatarChar = document.getElementById('wa-avatar-char');
+  if (waAvatarChar) waAvatarChar.innerText = (state.userProfile.businessName || 'B').charAt(0).toUpperCase();
+
+  const waHeaderBizName = document.getElementById('wa-header-business-name');
+  if (waHeaderBizName) waHeaderBizName.innerHTML = `${state.userProfile.businessName || 'Business'} <span class="wa-business-verified">✓</span>`;
 
   // Enforce limitations based on pricing
   enforcePlanLimitations();
