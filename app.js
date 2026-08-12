@@ -631,6 +631,7 @@ function enforcePlanLimitations() {
 
 // 1. Auth Modals
 function openAuthModal(mode = 'signup') {
+  clearAuthInlineError();
   const modal = document.getElementById('auth-modal');
   const suPanel = document.getElementById('form-panel-signup');
   const liPanel = document.getElementById('form-panel-login');
@@ -638,23 +639,27 @@ function openAuthModal(mode = 'signup') {
   const liTab = document.getElementById('tab-opt-login');
 
   if (mode === 'signup') {
-    suPanel.style.display = 'block';
-    liPanel.style.display = 'none';
-    suTab.classList.add('active');
-    liTab.classList.remove('active');
+    if (suPanel) suPanel.style.display = 'block';
+    if (liPanel) liPanel.style.display = 'none';
+    if (suTab) suTab.classList.add('active');
+    if (liTab) liTab.classList.remove('active');
   } else {
-    suPanel.style.display = 'none';
-    liPanel.style.display = 'block';
-    liTab.classList.add('active');
-    suTab.classList.remove('active');
+    if (suPanel) suPanel.style.display = 'none';
+    if (liPanel) liPanel.style.display = 'block';
+    if (liTab) liTab.classList.add('active');
+    if (suTab) suTab.classList.remove('active');
   }
 
-  modal.classList.add('active');
+  if (modal) modal.classList.add('active');
 }
 
 function closeAuthModal() {
-  document.getElementById('auth-modal').classList.remove('active');
+  const modal = document.getElementById('auth-modal');
+  if (modal) modal.classList.remove('active');
 }
+
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = closeAuthModal;
 
 // 2. Profile Setup Modal
 function openProfileModal() {
@@ -1512,6 +1517,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       addLog('system', 'Session restore failed: ' + err.message, 'default');
     }
+  } else {
+    // If not logged in, ensure navbar buttons and UI state are bound for visitors
+    syncUI();
+    bindNavbarListeners();
   }
 
   document.body.classList.remove('app-loading');
@@ -1719,8 +1728,23 @@ async function handleApplyPromoCode() {
     };
   }
 
-  // Pricing CTAs binding on landing page AND settings billing screen
+  // Global Click Event Handler for CTAs & Auth Triggers
   document.body.addEventListener('click', (e) => {
+    // Global Header Nav & Hero CTAs Fallback Handler
+    const navLoginBtn = e.target.closest('#nav-btn-login');
+    const navSignupBtn = e.target.closest('#nav-btn-signup, #hero-btn-start');
+
+    if (navLoginBtn && !state.userProfile.loggedIn) {
+      e.preventDefault();
+      openAuthModal('login');
+      return;
+    }
+    if (navSignupBtn && !state.userProfile.loggedIn) {
+      e.preventDefault();
+      openAuthModal('signup');
+      return;
+    }
+
     const cta = e.target.closest('.plan-cta');
     
     if (cta) {

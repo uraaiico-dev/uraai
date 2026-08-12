@@ -45,8 +45,8 @@
         <li><a href="#pricing-section" class="nav-link">Pricing</a></li>
       </ul>
       <div class="nav-actions" id="header-nav-actions">
-        <button class="btn-nav-ghost" id="nav-btn-login">Log In</button>
-        <button class="btn-nav-filled" id="nav-btn-signup">Start Free</button>
+        <button class="btn-nav-ghost" id="nav-btn-login" onclick="openAuthModal('login')">Log In</button>
+        <button class="btn-nav-filled" id="nav-btn-signup" onclick="openAuthModal('signup')">Start Free</button>
       </div>
     </header>
 
@@ -61,7 +61,7 @@
         Deploy custom bots on WhatsApp, Instagram, and Email in minutes. Save every lead, schedule appointments, and answer FAQs in Tamil, Hindi, and English.
       </p>
       <div class="hero-ctas">
-        <button class="btn-hero-primary" id="hero-btn-start">Get Started Free</button>
+        <button class="btn-hero-primary" id="hero-btn-start" onclick="openAuthModal('signup')">Get Started Free</button>
         <button class="btn-hero-secondary" id="hero-btn-sandbox">Try Live Simulator</button>
       </div>
     </section>
