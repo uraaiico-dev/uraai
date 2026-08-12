@@ -445,6 +445,8 @@ function syncUI() {
     ? state.userProfile.businessName
     : 'My Business';
 
+  const initial = userFullName.charAt(0).toUpperCase();
+
   const dashUserName = document.getElementById('dash-user-name');
   if (dashUserName) dashUserName.innerText = `${userFullName} 👋`;
 
