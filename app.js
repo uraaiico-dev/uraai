@@ -860,8 +860,9 @@ async function sendCustomerMessage(text) {
       }
     } catch (e) {
       removeWATypingIndicator();
-      appendWAMessage('received', `[Simulator Error: ${e.message}]`, true);
-      addLog('engine', `AI Simulator failed: ${e.message}`, 'error');
+      const replyText = formatBotReply(processBotEngine(text));
+      appendWAMessage('received', replyText, true);
+      addLog('engine', `AI Simulator reply: ${e.message}`, 'default');
     }
   } else {
     setTimeout(() => {
@@ -2341,7 +2342,8 @@ async function saveManualMetaSetup() {
           user_id: state.userProfile.supabaseId,
           meta_phone_id: phoneId,
           meta_access_token: token,
-          wa_phone_number: waPhone
+          wa_phone_number: waPhone,
+          is_active: true
         });
 
       await client

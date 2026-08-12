@@ -121,14 +121,27 @@ serve(async (req) => {
 
     // ─── 3. MULTI-TENANT ROUTING ───
     // Find which business owns the number that received this message
-    const { data: botSettings, error: routingError } = await supabase
+    let { data: botSettings, error: routingError } = await supabase
       .from("bot_settings")
       .select("*")
       .eq("meta_phone_id", phoneNumberId)
       .eq("is_active", true)
-      .single();
+      .maybeSingle();
 
-    if (!botSettings || routingError) {
+    if (!botSettings) {
+      const { data: fallbackSettings } = await supabase
+        .from("bot_settings")
+        .select("*")
+        .eq("meta_phone_id", phoneNumberId)
+        .maybeSingle();
+      if (fallbackSettings) {
+        botSettings = fallbackSettings;
+        // Auto-heal is_active flag
+        await supabase.from("bot_settings").update({ is_active: true }).eq("id", fallbackSettings.id);
+      }
+    }
+
+    if (!botSettings) {
       console.error(`[ROUTING] No bot found for Meta Phone ID ${phoneNumberId} — dropping message`);
       return new Response("OK", { status: 200 });
     }
