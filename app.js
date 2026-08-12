@@ -2758,6 +2758,8 @@ async function initCRM() {
   } catch (e) {
     console.error("CRM load error", e);
   }
+}
+
 // ─── BOT BUILDER & PROFILE SAVING ───
 document.getElementById('save-changes-btn')?.addEventListener('click', async () => {
   const newFullName = document.getElementById('settings-user-fullname')?.value.trim();
