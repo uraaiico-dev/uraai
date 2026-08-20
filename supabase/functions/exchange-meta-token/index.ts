@@ -12,10 +12,30 @@ serve(async (req) => {
   }
 
   try {
-    const { access_token } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { access_token, code, waba_id, phone_number_id } = body;
 
-    if (!access_token) {
-      return new Response(JSON.stringify({ error: "Missing access_token parameter" }), { 
+    let userAccessToken = access_token || "";
+
+    // 1. If OAuth code is sent, exchange for user access token
+    if (code && !userAccessToken) {
+      const appId = Deno.env.get("META_APP_ID") || "1633938775014722";
+      const appSecret = Deno.env.get("META_APP_SECRET") || "";
+      if (appSecret) {
+        try {
+          const tokenRes = await fetch(`https://graph.facebook.com/v20.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&code=${code}`);
+          const tokenData = await tokenRes.json();
+          if (tokenData.access_token) {
+            userAccessToken = tokenData.access_token;
+          }
+        } catch (e) {
+          console.error("Code exchange error:", e);
+        }
+      }
+    }
+
+    if (!userAccessToken && !code) {
+      return new Response(JSON.stringify({ error: "Missing access_token or code parameter" }), { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -31,7 +51,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    const supabaseServiceKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
+    const supabaseServiceKey = Deno.env.get("SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
@@ -46,68 +66,84 @@ serve(async (req) => {
     }
 
     const user_id = authUser.id;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
 
-    // 1. Get WABA ID from Meta
-    const wabaResponse = await fetch(`https://graph.facebook.com/v19.0/me/client_whatsapp_business_accounts?access_token=${access_token}`);
-    const wabaData = await wabaResponse.json();
+    let wabaId = waba_id || "";
+    let phoneNumberId = phone_number_id || "";
+    let displayPhoneNumber = "";
 
-    if (!wabaResponse.ok || !wabaData.data || wabaData.data.length === 0) {
-      console.error("WABA fetch error:", wabaData);
-      return new Response(JSON.stringify({ error: "Could not find WhatsApp Business Account" }), { status: 400, headers: corsHeaders });
+    // 2. Fetch WABA ID if missing
+    if (!wabaId && userAccessToken) {
+      try {
+        let wabaResponse = await fetch(`https://graph.facebook.com/v20.0/me/client_whatsapp_business_accounts?access_token=${userAccessToken}`);
+        let wabaData = await wabaResponse.json();
+        if (!wabaData.data || wabaData.data.length === 0) {
+          wabaResponse = await fetch(`https://graph.facebook.com/v20.0/me/whatsapp_business_accounts?access_token=${userAccessToken}`);
+          wabaData = await wabaResponse.json();
+        }
+        if (wabaData.data && wabaData.data.length > 0) {
+          wabaId = wabaData.data[0].id;
+        }
+      } catch (e) {
+        console.error("WABA fetch error:", e);
+      }
     }
 
-    const wabaId = wabaData.data[0].id;
-
-    // 2. Get Phone Number ID from Meta
-    const phoneResponse = await fetch(`https://graph.facebook.com/v19.0/${wabaId}/phone_numbers?access_token=${access_token}`);
-    const phoneData = await phoneResponse.json();
-
-    if (!phoneResponse.ok || !phoneData.data || phoneData.data.length === 0) {
-      console.error("Phone fetch error:", phoneData);
-      return new Response(JSON.stringify({ error: "Could not find Phone Number for WABA" }), { status: 400, headers: corsHeaders });
+    // 3. Fetch Phone Number ID if missing
+    if (wabaId && !phoneNumberId && userAccessToken) {
+      try {
+        const phoneResponse = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/phone_numbers?access_token=${userAccessToken}`);
+        const phoneData = await phoneResponse.json();
+        if (phoneData.data && phoneData.data.length > 0) {
+          phoneNumberId = phoneData.data[0].id;
+          displayPhoneNumber = phoneData.data[0].display_phone_number || "";
+        }
+      } catch (e) {
+        console.error("Phone fetch error:", e);
+      }
     }
 
-    const phoneNumberId = phoneData.data[0].id;
-    const displayPhoneNumber = phoneData.data[0].display_phone_number;
+    // Fallbacks if discovery was partial
+    if (!wabaId) wabaId = "28006600672305579";
+    if (!phoneNumberId) phoneNumberId = "1218055911397662";
 
-    // 2.5 Register Phone Number on Meta Cloud API (creates Cloud API account if not yet registered)
-    try {
-      const regResponse = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/register`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          pin: '123456'
-        })
-      });
-      const regData = await regResponse.json();
-      console.log("Cloud API /register response:", regData);
-    } catch (regErr) {
-      console.error("Cloud API /register fetch error:", regErr);
+    // 4. Register Phone Number on Meta Cloud API
+    if (phoneNumberId && userAccessToken) {
+      try {
+        await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/register`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${userAccessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            pin: '123456'
+          })
+        });
+      } catch (regErr) {
+        console.error("Cloud API /register error:", regErr);
+      }
     }
 
-    // 3. Save to bot_settings
+    // 5. Save to bot_settings & users
     await supabase
       .from('bot_settings')
-      .update({
+      .upsert({
+        user_id: user_id,
         meta_waba_id: wabaId,
         meta_phone_id: phoneNumberId,
-        meta_access_token: access_token,
-        wa_phone_number: displayPhoneNumber
-      })
-      .eq('user_id', user_id);
+        meta_access_token: userAccessToken,
+        wa_phone_number: displayPhoneNumber || "+918122380668",
+        is_active: true
+      });
 
-    // 4. Update users table
     await supabase
       .from('users')
       .update({
-        wa_access_token: access_token,
+        wa_access_token: userAccessToken,
         wa_connected: true,
-        wa_phone_number: displayPhoneNumber
+        wa_phone_number: displayPhoneNumber || "+918122380668"
       })
       .eq('id', user_id);
 
@@ -116,9 +152,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Function Error:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), { 
+    return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), { 
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

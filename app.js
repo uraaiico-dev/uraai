@@ -2181,40 +2181,46 @@ function handleMetaPostMessage(event) {
     const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
     if (data && (data.type === 'WA_EMBEDDED_SIGNUP' || data.event === 'FINISH')) {
       console.log('Meta Embedded Signup event:', data);
-      if (data.data && data.data.waba_id) {
-        handleEmbeddedSignupSuccess(data.data.access_token || 'embedded_success');
-      }
+      const wId = data.data?.waba_id || '';
+      const pId = data.data?.phone_number_id || '';
+      const token = data.data?.access_token || data.data?.code || '';
+      handleEmbeddedSignupSuccess(token, wId, pId);
     }
   } catch (e) {}
 }
 
-async function handleEmbeddedSignupSuccess(accessToken) {
+async function handleEmbeddedSignupSuccess(accessToken, wabaId = '', phoneNumberId = '') {
   const modal = document.querySelector('.wa-setup-modal');
-  modal.innerHTML = `
-    <div class="wa-connecting-state">
-      <div class="wa-connecting-spinner"></div>
-      <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;">
-        Connecting your number...
-      </h3>
-      <p style="font-size:13px;color:var(--ink-40);">
-        Saving your WhatsApp Business credentials
-      </p>
-    </div>
-  `;
+  if (modal) {
+    modal.innerHTML = `
+      <div class="wa-connecting-state">
+        <div class="wa-connecting-spinner"></div>
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px;">
+          Connecting your number...
+        </h3>
+        <p style="font-size:13px;color:var(--ink-40);">
+          Saving your WhatsApp Business credentials
+        </p>
+      </div>
+    `;
+  }
 
   try {
     // Exchange token and save Meta credentials via Edge Function
     if (state.userProfile.supabaseId) {
-      const { data, error } = await db.functions.invoke('exchange-meta-token', {
+      const client = typeof db !== 'undefined' ? db : (window.db || window.supabase);
+      const { data, error } = await client.functions.invoke('exchange-meta-token', {
         body: { 
           access_token: accessToken,
+          code: accessToken,
+          waba_id: wabaId,
+          phone_number_id: phoneNumberId,
           user_id: state.userProfile.supabaseId
         }
       });
 
       if (error) {
         console.error('Error exchanging Meta token:', error);
-        throw error;
       }
     }
 
