@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const FALLBACK_META_TOKEN = "EAAXODwREZCUIBSY9NYtXAUSOzOLnNvZClZA3PerQBg3vLPBovDkqPrJLjwLKLZCc19CwVXwZA0MFJ6LlfGzP7A2bRYjLd9zuLBWAvtCu7gJUq7pd8IdHXbKJeV3a23aPsmwZCbm6meU0XN3xHYV9Fq2akGYLi3qVNDJEK7IwGZCrc9x9CJoNN3zLAlqTZA8IdqgjXgZDZD";
+
 serve(async (req) => {
   const method = (req.method || "").toUpperCase();
 
@@ -150,8 +152,8 @@ serve(async (req) => {
         }
 
         // Send Meta Graph API reply if token exists
-        const pId = botSettings.meta_phone_id || phoneNumberId;
-        const cleanToken = botSettings.meta_access_token ? botSettings.meta_access_token.trim() : "";
+        const pId = (botSettings && botSettings.meta_phone_id) || phoneNumberId;
+        const cleanToken = (botSettings && botSettings.meta_access_token && botSettings.meta_access_token.trim()) ? botSettings.meta_access_token.trim() : FALLBACK_META_TOKEN;
         const cleanToNumber = fromNumber.replace(/[^0-9]/g, "");
 
         if (cleanToken && pId && cleanToNumber) {
