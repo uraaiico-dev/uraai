@@ -152,7 +152,10 @@ serve(async (req) => {
         }
 
         // Send Meta Graph API reply if token exists
-        const pId = (botSettings && botSettings.meta_phone_id) || phoneNumberId;
+        let pId = (botSettings && botSettings.meta_phone_id) || phoneNumberId || "1218055911397662";
+        if (!pId || pId === "28006600672305579" || pId.startsWith("280")) {
+          pId = "1218055911397662";
+        }
         const cleanToken = (botSettings && botSettings.meta_access_token && botSettings.meta_access_token.trim()) ? botSettings.meta_access_token.trim() : FALLBACK_META_TOKEN;
         const cleanToNumber = fromNumber.replace(/[^0-9]/g, "");
 
