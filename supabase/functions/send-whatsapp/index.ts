@@ -76,12 +76,20 @@ serve(async (req) => {
         let botSettings: any = null;
         try {
           if (phoneNumberId) {
-            const { data } = await supabase.from("bot_settings").select("*").eq("meta_phone_id", phoneNumberId).maybeSingle();
-            botSettings = data;
+            const { data } = await supabase
+              .from("bot_settings")
+              .select("*")
+              .eq("meta_phone_id", String(phoneNumberId))
+              .limit(1);
+            if (data && data.length > 0) botSettings = data[0];
           }
           if (!botSettings) {
-            const { data } = await supabase.from("bot_settings").select("*").maybeSingle();
-            botSettings = data;
+            const { data } = await supabase
+              .from("bot_settings")
+              .select("*")
+              .order("created_at", { ascending: false })
+              .limit(1);
+            if (data && data.length > 0) botSettings = data[0];
           }
         } catch (dbErr) {
           console.error("[DB ROUTING ERROR]", dbErr);
@@ -142,19 +150,23 @@ serve(async (req) => {
         }
 
         // Send Meta Graph API reply if token exists
-        const pId = phoneNumberId || botSettings.meta_phone_id;
-        if (botSettings.meta_access_token && pId) {
+        const pId = botSettings.meta_phone_id || phoneNumberId;
+        const cleanToken = botSettings.meta_access_token ? botSettings.meta_access_token.trim() : "";
+        const cleanToNumber = fromNumber.replace(/[^0-9]/g, "");
+
+        if (cleanToken && pId && cleanToNumber) {
           try {
+            console.log(`[SENDING META MESSAGE] To: ${cleanToNumber} via PhoneId: ${pId}`);
             const metaRes = await fetch(`https://graph.facebook.com/v20.0/${pId}/messages`, {
               method: "POST",
               headers: {
-                "Authorization": `Bearer ${botSettings.meta_access_token}`,
+                "Authorization": `Bearer ${cleanToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
                 messaging_product: "whatsapp",
                 recipient_type: "individual",
-                to: fromNumber.replace("whatsapp:", ""),
+                to: cleanToNumber,
                 type: "text",
                 text: { body: replyMessage }
               }),
@@ -165,7 +177,11 @@ serve(async (req) => {
             console.error("[META FETCH ERROR]", mErr);
           }
         } else {
-          console.warn("[WARNING] Missing meta_access_token or meta_phone_id in bot_settings!");
+          console.warn("[WARNING] Missing meta_access_token, meta_phone_id, or valid recipient number!", {
+            token_present: !!cleanToken,
+            pId,
+            cleanToNumber
+          });
         }
 
         try {
@@ -237,13 +253,13 @@ serve(async (req) => {
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${botSettings.meta_access_token}`,
+            "Authorization": `Bearer ${botSettings.meta_access_token.trim()}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             messaging_product: "whatsapp",
             recipient_type: "individual",
-            to: to_number,
+            to: to_number.replace(/[^0-9]/g, ""),
             type: "text",
             text: { body: message_body }
           }),
