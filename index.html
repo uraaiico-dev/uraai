@@ -422,8 +422,13 @@
                         Connect →
                       </button>
                       <!-- Shows when connected (hidden by default) -->
-                      <div class="channel-connected-badge" id="wa-connected-badge" style="display:none;">
-                        <span class="live-dot"></span> Live
+                      <div id="wa-connected-badge-wrap" style="display:none; align-items:center; gap:8px;">
+                        <div class="channel-connected-badge" id="wa-connected-badge">
+                          <span class="live-dot"></span> Live
+                        </div>
+                        <button onclick="showManualMetaSetupModal()" style="padding:6px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; color:var(--violet);">
+                          ⚙️ Edit Token
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -689,6 +694,32 @@
                       <option value="default">General Business 💼</option>
                     </select>
                   </div>
+                </div>
+              </div>
+
+              <!-- Meta API Access Token Section -->
+              <div class="form-block" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <label style="font-weight: 700; color: #10B981; margin-bottom: 0; display:flex; align-items:center; gap:6px;">
+                    🔑 Meta WhatsApp API Access Token & Keys
+                  </label>
+                  <button type="button" onclick="showManualMetaSetupModal()" style="padding:6px 12px; background:white; border:1px solid rgba(16,185,129,0.3); border-radius:8px; font-size:11px; font-weight:700; color:#059669; cursor:pointer;">
+                    ⚙️ Open Modal
+                  </button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                  <div>
+                    <label style="font-size: 11px; font-weight:700; color: var(--ink-60);">Phone Number ID</label>
+                    <input type="text" class="field" id="settings-meta-phone-id" placeholder="e.g. 109876543210123" style="border-radius: 8px;">
+                  </div>
+                  <div>
+                    <label style="font-size: 11px; font-weight:700; color: var(--ink-60);">Display WhatsApp Number</label>
+                    <input type="text" class="field" id="settings-meta-wa-phone" placeholder="e.g. +91 98765 43210" style="border-radius: 8px;">
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size: 11px; font-weight:700; color: var(--ink-60);">Permanent Access Token</label>
+                  <input type="password" class="field" id="settings-meta-access-token" placeholder="EAAG..." style="border-radius: 8px;">
                 </div>
               </div>
 

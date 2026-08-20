@@ -538,10 +538,13 @@ function syncUI() {
   const metaWabaIdInput = document.getElementById('meta-waba-id');
   if (metaWabaIdInput) metaWabaIdInput.value = state.userProfile.metaWabaId || '';
 
-  const metaPhoneIdInput = document.getElementById('meta-phone-id');
+  const metaPhoneIdInput = document.getElementById('meta-phone-id') || document.getElementById('settings-meta-phone-id');
   if (metaPhoneIdInput) metaPhoneIdInput.value = state.userProfile.metaPhoneId || '';
 
-  const metaTokenInput = document.getElementById('meta-access-token');
+  const metaWaPhoneInput = document.getElementById('settings-meta-wa-phone');
+  if (metaWaPhoneInput) metaWaPhoneInput.value = state.userProfile.waPhone || '';
+
+  const metaTokenInput = document.getElementById('meta-access-token') || document.getElementById('settings-meta-access-token');
   if (metaTokenInput) metaTokenInput.value = state.userProfile.metaAccessToken || '';
 
   // Sync Languages Tags
@@ -2397,6 +2400,7 @@ function updateWhatsAppChannelCard(isConnected) {
   const statusText = document.getElementById('wa-channel-status-text');
   const connectBtn = document.getElementById('wa-connect-btn');
   const connectedBadge = document.getElementById('wa-connected-badge');
+  const connectedBadgeWrap = document.getElementById('wa-connected-badge-wrap');
 
   if (!card) return;
 
@@ -2404,12 +2408,14 @@ function updateWhatsAppChannelCard(isConnected) {
     card.classList.add('connected');
     if (statusText) statusText.textContent = 'Connected · Bot is live';
     if (connectBtn) connectBtn.style.display = 'none';
-    if (connectedBadge) connectedBadge.style.display = 'flex';
+    if (connectedBadgeWrap) connectedBadgeWrap.style.display = 'flex';
+    else if (connectedBadge) connectedBadge.style.display = 'flex';
   } else {
     card.classList.remove('connected');
     if (statusText) statusText.textContent = 'Not connected';
     if (connectBtn) connectBtn.style.display = 'block';
-    if (connectedBadge) connectedBadge.style.display = 'none';
+    if (connectedBadgeWrap) connectedBadgeWrap.style.display = 'none';
+    else if (connectedBadge) connectedBadge.style.display = 'none';
   }
 }
 
@@ -2828,12 +2834,38 @@ document.getElementById('save-changes-btn')?.addEventListener('click', async () 
         plan: state.currentPlan
       });
 
-      if (welcomeMsg) {
-        state.welcomeMessage = welcomeMsg;
-        await supabase
+      const metaPhoneId = document.getElementById('settings-meta-phone-id')?.value.trim();
+      const metaWaPhone = document.getElementById('settings-meta-wa-phone')?.value.trim();
+      const metaAccessToken = document.getElementById('settings-meta-access-token')?.value.trim();
+
+      const botUpdates = {};
+      if (welcomeMsg) botUpdates.welcome_message = welcomeMsg;
+      if (metaPhoneId) { botUpdates.meta_phone_id = metaPhoneId; state.userProfile.metaPhoneId = metaPhoneId; }
+      if (metaWaPhone) { botUpdates.wa_phone_number = metaWaPhone; botUpdates.whatsapp_number = metaWaPhone; state.userProfile.waPhone = metaWaPhone; }
+      if (metaAccessToken) { botUpdates.meta_access_token = metaAccessToken; state.userProfile.metaAccessToken = metaAccessToken; }
+
+      if (Object.keys(botUpdates).length > 0) {
+        const client = typeof db !== 'undefined' ? db : (window.db || window.supabase);
+        await client
           .from('bot_settings')
-          .update({ welcome_message: welcomeMsg })
-          .eq('user_id', state.userProfile.supabaseId);
+          .upsert({
+            user_id: state.userProfile.supabaseId,
+            ...botUpdates,
+            is_active: true
+          });
+
+        if (metaAccessToken || metaWaPhone || metaPhoneId) {
+          await client
+            .from('users')
+            .update({
+              wa_access_token: metaAccessToken || state.userProfile.metaAccessToken,
+              wa_connected: true,
+              wa_phone_number: metaWaPhone || state.userProfile.waPhone
+            })
+            .eq('id', state.userProfile.supabaseId);
+          state.channels.whatsapp = true;
+          state.userProfile.waConnected = true;
+        }
       }
 
       // Refresh AI Setup Questions for new Industry Category
