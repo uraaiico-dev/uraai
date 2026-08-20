@@ -2279,8 +2279,16 @@ function showWhatsAppSetupError(message) {
 }
 
 function showManualMetaSetupModal() {
-  const modal = document.querySelector('.wa-setup-modal');
+  let modal = document.querySelector('.wa-setup-modal');
+  if (!modal) {
+    showWhatsAppSetupModal();
+    modal = document.querySelector('.wa-setup-modal');
+  }
   if (!modal) return;
+
+  const currentPhoneId = state.userProfile.metaPhoneId || '';
+  const currentToken = state.userProfile.metaAccessToken || '';
+  const currentWaPhone = state.userProfile.waPhone || '';
 
   modal.innerHTML = `
     <div class="wa-manual-setup-state">
@@ -2294,15 +2302,15 @@ function showManualMetaSetupModal() {
       <div style="display:flex; flex-direction:column; gap:12px; text-align:left;">
         <div>
           <label style="font-size:11px; font-weight:700; color:var(--ink-60);">Phone Number ID</label>
-          <input type="text" id="manual-meta-phone-id" placeholder="e.g. 109876543210123" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
+          <input type="text" id="manual-meta-phone-id" value="${currentPhoneId}" placeholder="e.g. 109876543210123" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
         </div>
         <div>
           <label style="font-size:11px; font-weight:700; color:var(--ink-60);">Permanent Access Token</label>
-          <input type="password" id="manual-meta-token" placeholder="EAAG..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
+          <input type="password" id="manual-meta-token" value="${currentToken}" placeholder="EAAG..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
         </div>
         <div>
           <label style="font-size:11px; font-weight:700; color:var(--ink-60);">Display WhatsApp Phone Number</label>
-          <input type="tel" id="manual-meta-wa-phone" placeholder="e.g. +91 98765 43210" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
+          <input type="tel" id="manual-meta-wa-phone" value="${currentWaPhone}" placeholder="e.g. +91 98765 43210" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px; margin-top:4px;">
         </div>
       </div>
 
