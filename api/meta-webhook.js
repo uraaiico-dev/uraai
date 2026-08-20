@@ -20,7 +20,9 @@ export default async function handler(req, res) {
   // 2. Handle Meta POST Incoming WhatsApp Message
   if (req.method === "POST") {
     try {
-      console.log("[META POST WEBHOOK] Forwarding to Supabase edge function...");
+      const payloadString = typeof req.body === "string" ? req.body : JSON.stringify(req.body || {});
+      console.log("[META POST WEBHOOK] Forwarding payload to Supabase Edge Function...");
+      
       const response = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: "POST",
         headers: {
@@ -28,11 +30,11 @@ export default async function handler(req, res) {
           "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
           "apikey": SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify(req.body || {}),
+        body: payloadString,
       });
 
       const responseText = await response.text();
-      console.log("[SUPABASE RESPONSE]", response.status, responseText);
+      console.log("[SUPABASE EDGE RESPONSE]", response.status, responseText);
 
       return res.status(200).send("OK");
     } catch (err) {
