@@ -1,8 +1,20 @@
 const SUPABASE_URL = "https://fmqgxctgowrpepbnccwq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcWd4Y3Rnb3dycGVwYm5jY3dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDg5ODQsImV4cCI6MjA5ODEyNDk4NH0.jUepygo2S74_1csPoqsgfEPvr1osG5_KCk7uC-PzkR8";
 
+async function getRawBody(req) {
+  if (req.body) {
+    if (typeof req.body === "string") return req.body;
+    if (Buffer.isBuffer(req.body)) return req.body.toString("utf-8");
+    return JSON.stringify(req.body);
+  }
+  return new Promise((resolve) => {
+    let data = "";
+    req.on("data", (chunk) => { data += chunk; });
+    req.on("end", () => { resolve(data); });
+  });
+}
+
 export default async function handler(req, res) {
-  // CORS Headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
 
@@ -10,19 +22,17 @@ export default async function handler(req, res) {
     return res.status(200).send("ok");
   }
 
-  // 1. Handle Meta GET Webhook Verification
   if (req.method === "GET") {
     const challenge = req.query["hub.challenge"] || req.query["challenge"] || "SUCCESS123";
     console.log("[META GET VERIFY] Challenge:", challenge);
     return res.status(200).send(challenge);
   }
 
-  // 2. Handle Meta POST Incoming WhatsApp Message
   if (req.method === "POST") {
     try {
-      const payloadString = typeof req.body === "string" ? req.body : JSON.stringify(req.body || {});
-      console.log("[META POST WEBHOOK] Forwarding payload to Supabase Edge Function...");
-      
+      const payloadString = await getRawBody(req);
+      console.log("[META POST WEBHOOK] Forwarding payload to Supabase Edge Function:", payloadString);
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: "POST",
         headers: {
