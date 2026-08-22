@@ -2151,19 +2151,28 @@ function launchFacebookEmbeddedSignup() {
     return;
   }
 
+  // Reset Embedded Signup aggregated state
+  window.metaSignupState = {
+    accessToken: '',
+    code: '',
+    wabaId: '',
+    phoneNumberId: '',
+    submitted: false
+  };
+
   // Listen for Meta Embedded Signup postMessage events
   window.removeEventListener('message', handleMetaPostMessage);
   window.addEventListener('message', handleMetaPostMessage);
 
   // Launch Meta Embedded Signup
   FB.login(function(response) {
-    if (response.authResponse && (response.authResponse.accessToken || response.authResponse.code)) {
-      const token = response.authResponse.accessToken || response.authResponse.code;
-      console.log('FB Login success, token/code received:', token);
-      handleEmbeddedSignupSuccess(token);
-    } else {
-      console.log('FB Login response:', response);
+    console.log('FB Login response received:', response);
+    if (response.authResponse) {
+      if (response.authResponse.accessToken) window.metaSignupState.accessToken = response.authResponse.accessToken;
+      if (response.authResponse.code) window.metaSignupState.code = response.authResponse.code;
     }
+    // Give postMessage event 1 second to arrive if postMessage fires right after modal closes
+    setTimeout(trySubmitMetaSignup, 1000);
   }, {
     config_id: '4551130871834024',
     response_type: 'code',
@@ -2176,17 +2185,31 @@ function launchFacebookEmbeddedSignup() {
 }
 
 function handleMetaPostMessage(event) {
-  if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
+  if (!event.origin || !event.origin.includes('facebook.com')) return;
   try {
     const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
     if (data && (data.type === 'WA_EMBEDDED_SIGNUP' || data.event === 'FINISH')) {
-      console.log('Meta Embedded Signup event:', data);
-      const wId = data.data?.waba_id || '';
-      const pId = data.data?.phone_number_id || '';
-      const token = data.data?.access_token || data.data?.code || '';
-      handleEmbeddedSignupSuccess(token, wId, pId);
+      console.log('Meta Embedded Signup postMessage received:', data);
+      if (data.data) {
+        if (data.data.waba_id) window.metaSignupState.wabaId = data.data.waba_id;
+        if (data.data.phone_number_id) window.metaSignupState.phoneNumberId = data.data.phone_number_id;
+        if (data.data.access_token) window.metaSignupState.accessToken = data.data.access_token;
+        if (data.data.code) window.metaSignupState.code = data.data.code;
+      }
+      trySubmitMetaSignup();
     }
   } catch (e) {}
+}
+
+function trySubmitMetaSignup() {
+  if (!window.metaSignupState || window.metaSignupState.submitted) return;
+  const tokenOrCode = window.metaSignupState.accessToken || window.metaSignupState.code;
+  if (!tokenOrCode) {
+    console.log('Waiting for Meta token or OAuth code...');
+    return;
+  }
+  window.metaSignupState.submitted = true;
+  handleEmbeddedSignupSuccess(tokenOrCode, window.metaSignupState.wabaId, window.metaSignupState.phoneNumberId);
 }
 
 async function handleEmbeddedSignupSuccess(accessToken, wabaId = '', phoneNumberId = '') {
@@ -2211,8 +2234,8 @@ async function handleEmbeddedSignupSuccess(accessToken, wabaId = '', phoneNumber
       const client = typeof db !== 'undefined' ? db : (window.db || window.supabase);
       const { data, error } = await client.functions.invoke('exchange-meta-token', {
         body: { 
-          access_token: accessToken,
-          code: accessToken,
+          access_token: window.metaSignupState?.accessToken || accessToken,
+          code: window.metaSignupState?.code || accessToken,
           waba_id: wabaId,
           phone_number_id: phoneNumberId,
           user_id: state.userProfile.supabaseId
@@ -2437,6 +2460,46 @@ function updateWhatsAppChannelCard(isConnected) {
 function restoreWhatsAppConnectionState() {
   if (state.userProfile.waConnected) {
     updateWhatsAppChannelCard(true);
+  }
+}
+
+async function disconnectWhatsAppConnection() {
+  if (!confirm("Are you sure you want to disconnect WhatsApp? You can reconnect immediately via Facebook Embedded Signup.")) {
+    return;
+  }
+
+  try {
+    const userId = state.userProfile.supabaseId;
+    const client = typeof db !== 'undefined' ? db : (window.db || window.supabase);
+
+    if (userId && client) {
+      await client.from('bot_settings').update({
+        is_active: false,
+        meta_access_token: null,
+        meta_phone_id: null,
+        meta_waba_id: null
+      }).eq('user_id', userId);
+
+      await client.from('users').update({
+        wa_connected: false,
+        wa_access_token: null
+      }).eq('id', userId);
+    }
+
+    state.channels.whatsapp = false;
+    state.userProfile.waConnected = false;
+    state.userProfile.metaPhoneId = '';
+    state.userProfile.metaAccessToken = '';
+    state.userProfile.waPhone = '';
+
+    updateWhatsAppChannelCard(false);
+    triggerNotification('Disconnected', 'WhatsApp channel disconnected. Click Connect to use Facebook Signup.');
+    
+    // Automatically launch setup modal
+    startWhatsAppEmbeddedSignup();
+  } catch (err) {
+    console.error('Failed to disconnect WhatsApp:', err);
+    triggerNotification('Error', 'Failed to disconnect: ' + err.message);
   }
 }
 

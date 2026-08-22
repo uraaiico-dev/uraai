@@ -422,12 +422,18 @@
                         Connect →
                       </button>
                       <!-- Shows when connected (hidden by default) -->
-                      <div id="wa-connected-badge-wrap" style="display:none; align-items:center; gap:8px;">
+                      <div id="wa-connected-badge-wrap" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
                         <div class="channel-connected-badge" id="wa-connected-badge">
                           <span class="live-dot"></span> Live
                         </div>
-                        <button onclick="showManualMetaSetupModal()" style="padding:6px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; color:var(--violet);">
+                        <button type="button" onclick="startWhatsAppEmbeddedSignup()" style="padding:6px 12px; background:var(--violet); color:white; border:none; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">
+                          🔄 Switch to Facebook Signup
+                        </button>
+                        <button type="button" onclick="showManualMetaSetupModal()" style="padding:6px 12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; color:var(--violet);">
                           ⚙️ Edit Token
+                        </button>
+                        <button type="button" onclick="disconnectWhatsAppConnection()" style="padding:6px 10px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); border-radius:8px; font-size:11px; font-weight:700; color:#EF4444; cursor:pointer;">
+                          Disconnect
                         </button>
                       </div>
                     </div>

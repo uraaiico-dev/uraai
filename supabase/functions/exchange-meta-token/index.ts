@@ -16,9 +16,12 @@ serve(async (req) => {
     const { access_token, code, waba_id, phone_number_id } = body;
 
     let userAccessToken = access_token || "";
+    let wabaId = waba_id || "";
+    let phoneNumberId = phone_number_id || "";
+    let displayPhoneNumber = "";
 
-    // 1. If OAuth code is sent, exchange for user access token
-    if (code && !userAccessToken) {
+    // 1. If OAuth code is provided, exchange it for a long-lived user access token
+    if (code) {
       const appId = Deno.env.get("META_APP_ID") || "1633938775014722";
       const appSecret = Deno.env.get("META_APP_SECRET") || "";
       if (appSecret) {
@@ -27,9 +30,12 @@ serve(async (req) => {
           const tokenData = await tokenRes.json();
           if (tokenData.access_token) {
             userAccessToken = tokenData.access_token;
+            console.log("[META EXCHANGE] Code successfully exchanged for access token.");
+          } else if (tokenData.error) {
+            console.warn("[META EXCHANGE] Code exchange warning:", tokenData.error.message);
           }
         } catch (e) {
-          console.error("Code exchange error:", e);
+          console.error("[META EXCHANGE] Code exchange network error:", e);
         }
       }
     }
@@ -68,10 +74,6 @@ serve(async (req) => {
     const user_id = authUser.id;
     const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
 
-    let wabaId = waba_id || "";
-    let phoneNumberId = phone_number_id || "";
-    let displayPhoneNumber = "";
-
     // 2. Fetch WABA ID if missing
     if (!wabaId && userAccessToken) {
       try {
@@ -85,7 +87,7 @@ serve(async (req) => {
           wabaId = wabaData.data[0].id;
         }
       } catch (e) {
-        console.error("WABA fetch error:", e);
+        console.error("[META EXCHANGE] WABA fetch error:", e);
       }
     }
 
@@ -99,13 +101,14 @@ serve(async (req) => {
           displayPhoneNumber = phoneData.data[0].display_phone_number || "";
         }
       } catch (e) {
-        console.error("Phone fetch error:", e);
+        console.error("[META EXCHANGE] Phone fetch error:", e);
       }
     }
 
-    // Fallbacks if discovery was partial
-    if (!wabaId) wabaId = "28006600672305579";
-    if (!phoneNumberId) phoneNumberId = "1218055911397662";
+    // Validate discovered or passed IDs
+    if (!wabaId || !phoneNumberId) {
+      console.warn("[META EXCHANGE] Warning: Incomplete WABA ID or Phone Number ID derived from signup:", { wabaId, phoneNumberId });
+    }
 
     // 4. Register Phone Number on Meta Cloud API
     if (phoneNumberId && userAccessToken) {
